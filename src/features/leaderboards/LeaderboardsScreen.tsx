@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useUnits } from '@/activity/format';
@@ -8,7 +8,6 @@ import { Body, Button, Card, ErrorText, formStyles, SectionTitle } from '@/featu
 import { SignInGate } from '@/features/account/SignInGate';
 import { goBack, leaderboardsPath, recordPath, type LeaderboardScopeParam } from '@/features/shell/routes';
 import { useNow } from '@/mbta/live/usePolling';
-import { listMyGroups, type Group } from '@/social/groups';
 import {
   BOARD_META,
   fetchChampions,
@@ -37,7 +36,7 @@ import {
   previousPeriodStart,
   resetCountdown,
   ROUTE_NOT_SHARED,
-  scopeChips,
+  SCOPE_CHIPS,
   scopeKey,
   splitMyRow,
 } from './leaderboardModel';
@@ -60,11 +59,9 @@ export type LeaderboardsScreenParams = {
   board: BoardId | null;
   period: PeriodKind | null;
   scope: LeaderboardScopeParam | null;
-  groupId: string | null;
 };
 
 function initialScope(p: LeaderboardsScreenParams): BoardScope {
-  if (p.scope === 'group' && p.groupId) return { kind: 'group', groupId: p.groupId };
   if (p.scope === 'friends') return { kind: 'friends' };
   return { kind: 'global' };
 }
@@ -90,7 +87,6 @@ function Boards({ params }: { params: LeaderboardsScreenParams }) {
   const [period, setPeriod] = useState<PeriodKind>(params.period ?? 'week');
   const [board, setBoard] = useState<BoardId>(params.board ?? 'run_distance');
   const [scope, setScope] = useState<BoardScope>(() => initialScope(params));
-  const [groups, setGroups] = useState<Group[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   // The period follows the clock, so a rollover while the screen is open moves to the new period.
   const start = periodStart(period, now);
@@ -99,16 +95,6 @@ function Boards({ params }: { params: LeaderboardsScreenParams }) {
   const [lb, setLb] = useState<Load<Leaderboard>>({ value: null, loading: true, error: null });
   const [runs, setRuns] = useState<FeaturedRun[]>([]);
   const [champs, setChamps] = useState<Champion[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    void listMyGroups().then((r) => {
-      if (!cancelled && r.ok) setGroups(r.value);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const key = boardQueryKey({ board, period, periodStart: start, scope });
   const periodKey = `${period}|${start}`;
@@ -179,11 +165,7 @@ function Boards({ params }: { params: LeaderboardsScreenParams }) {
   }, [selectedRun, c.brand]);
   useMapOverlay(OVERLAY_OWNER, overlay);
 
-  const chips = scopeChips(groups);
-  // A group from a link that isn't in my list yet still gets a chip.
-  if (scope.kind === 'group' && !chips.some((ch) => ch.key === scopeKey(scope))) {
-    chips.push({ key: scopeKey(scope), label: 'Group', scope });
-  }
+  const chips = SCOPE_CHIPS;
   const boardChamps = champs.filter((ch) => ch.board === board).sort((a, b) => a.rank - b.rank).slice(0, 3);
   const split = lb.value && lb.value.board === board ? splitMyRow(lb.value) : null;
 

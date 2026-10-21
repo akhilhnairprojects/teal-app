@@ -171,6 +171,8 @@ describe('previewClaim', () => {
     expect(previewClaimText(previewClaim(sqlTestRect(42.352, -71.07, 400, 400)))).toBe(
       `About 35 territory squares · ${PREVIEW_LABEL.toLowerCase()}`,
     );
+    // Signed out the run stays on this phone, so the count is final.
+    expect(previewClaimText(previewClaim(sqlTestRect(42.352, -71.07, 400, 400)), { local: true })).toBe('Claimed 35 territory squares');
   });
 });
 

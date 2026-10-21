@@ -53,7 +53,6 @@ export function buildSubmitPayload(a: LocalActivity, points: readonly { t: numbe
     started_at: new Date(startedAt).toISOString(),
     ended_at: new Date(endedAt).toISOString(),
     share_route: a.shareRoute,
-    group_session_id: a.groupSessionId,
     points: points.map((p) => [p.t - t0, p.lat, p.lon]),
   };
 }

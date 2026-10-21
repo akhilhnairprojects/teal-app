@@ -21,7 +21,7 @@ export const BOARD_META: Record<BoardId, { label: string; unit: 'duration' | 'di
 
 export const BOARD_IDS = Object.keys(BOARD_META) as BoardId[];
 
-export type BoardScope = { kind: 'global' } | { kind: 'friends' } | { kind: 'group'; groupId: string };
+export type BoardScope = { kind: 'global' } | { kind: 'friends' };
 
 export type LeaderboardRow = {
   rank: number;
@@ -79,7 +79,7 @@ export async function fetchLeaderboard(q: {
     p_period: q.period,
     p_period_start: start,
     p_scope: q.scope.kind,
-    p_group_id: q.scope.kind === 'group' ? q.scope.groupId : null,
+    p_group_id: null, // the server also has group boards; the app doesn't offer groups
     p_limit: limit,
   });
   if (!r.ok) return r;

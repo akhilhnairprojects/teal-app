@@ -48,7 +48,6 @@ export type RecorderSnapshot = {
   startedAt: number | null;
   stats: LiveStats;
   recentPath: LatLng[];
-  groupSessionId: string | null;
   backgroundGapMs: number;
   warnings: RecorderWarning[];
   /** The last recording was deleted by the too-fast guard (shown until dismissed or a new start). */
@@ -77,7 +76,6 @@ type Header = {
   localId: string;
   kind: ActivityKind;
   startedAt: number;
-  groupSessionId: string | null;
   chunks: number;
   points: number;
   backgroundGapMs: number;
@@ -102,7 +100,6 @@ const IDLE: RecorderSnapshot = {
   startedAt: null,
   stats: EMPTY_STATS,
   recentPath: [],
-  groupSessionId: null,
   backgroundGapMs: 0,
   warnings: [],
   voided: null,
@@ -117,7 +114,6 @@ let phase: RecorderPhase = 'idle';
 let kind: ActivityKind = 'run';
 let localId: string | null = null;
 let startedAt: number | null = null;
-let groupSessionId: string | null = null;
 let points: TrackPoint[] = [];
 /** Counted distance up to each point (segment rules), for the pace window. */
 let cum: number[] = [];
@@ -202,7 +198,6 @@ function buildSnapshot(now: number): RecorderSnapshot {
     startedAt,
     stats: liveStats(now),
     recentPath: path,
-    groupSessionId,
     backgroundGapMs,
     warnings: [...warnings],
     voided,
@@ -218,7 +213,7 @@ function publishNow() {
   if (phase === 'acquiring' || phase === 'recording' || phase === 'paused') {
     const label =
       phase === 'acquiring' ? '● Starting recording' : `● ${phase === 'paused' ? 'Paused' : 'Recording'} · ${formatDistanceM(totals.distanceM, getUnits())}`;
-    setActiveMode({ id: 'recording', label, href: recordPath({ kind, sessionId: groupSessionId }) });
+    setActiveMode({ id: 'recording', label, href: recordPath({ kind }) });
   }
   listeners.forEach((l) => l(snapshot));
 }
@@ -380,7 +375,6 @@ function resetRun(): void {
   phase = 'idle';
   localId = null;
   startedAt = null;
-  groupSessionId = null;
   points = [];
   cum = [];
   totals = { distanceM: 0, excludedM: 0, movingMs: 0 };
@@ -412,7 +406,7 @@ async function persist(): Promise<void> {
     await writeCache(recChunkKey(n), REC_VERSION, slice);
   }
   persistedFullChunks = full;
-  const header: Header = { localId, kind, startedAt, groupSessionId, chunks, points: points.length, backgroundGapMs };
+  const header: Header = { localId, kind, startedAt, chunks, points: points.length, backgroundGapMs };
   await writeCache(REC_HEADER_KEY, REC_VERSION, header);
 }
 
@@ -446,7 +440,6 @@ async function saveRecorded(o: {
   localId: string;
   kind: ActivityKind;
   startedAt: number;
-  groupSessionId: string | null;
   points: TrackPoint[];
   shareRoute: boolean;
 }): Promise<LocalActivity | { discarded: 'tooShort' | 'tooFast' }> {
@@ -467,7 +460,6 @@ async function saveRecorded(o: {
     startedAt: start,
     endedAt: start + rebased[rebased.length - 1].t,
     ownerUserId: owner,
-    groupSessionId: o.groupSessionId,
     shareRoute: o.shareRoute,
     metrics,
     previewPolyline: encodePolyline(recentPath(rebased, 300)),
@@ -542,13 +534,12 @@ function resumeWithoutLease(): Promise<Result<void>> {
 
 export const recorder = {
   /** Start acquiring GPS; recording begins at the first fix within 20 m (or `resume()` to start anyway). */
-  async start(o: { kind: ActivityKind; groupSessionId?: string | null }): Promise<Result<void>> {
+  async start(o: { kind: ActivityKind }): Promise<Result<void>> {
     if (phase === 'acquiring' || phase === 'recording' || phase === 'paused') return { ok: false, error: err('A recording is already in progress.') };
     if (await readHeader()) return { ok: false, error: err('Resume or save your unfinished recording first.') };
     resetRun();
     voided = null;
     kind = o.kind;
-    groupSessionId = o.groupSessionId ?? null;
     localId = uuidv4();
     phase = 'acquiring';
     if (!canTrackInBackground()) warnings.add('foregroundOnly');
@@ -610,7 +601,7 @@ export const recorder = {
     stopRuntime();
     const result =
       localId && startedAt !== null
-        ? await saveRecorded({ localId, kind, startedAt, groupSessionId, points, shareRoute: o.shareRoute })
+        ? await saveRecorded({ localId, kind, startedAt, points, shareRoute: o.shareRoute })
         : ({ discarded: 'tooShort' } as const);
     await clearPersisted();
     if ('discarded' in result) {
@@ -668,7 +659,7 @@ export const recorder = {
     }
     if (action === 'save') {
       resetRun();
-      const r = await saveRecorded({ localId: h.localId, kind: h.kind, startedAt: h.startedAt, groupSessionId: h.groupSessionId, points: saved, shareRoute: false });
+      const r = await saveRecorded({ localId: h.localId, kind: h.kind, startedAt: h.startedAt, points: saved, shareRoute: false });
       if ('discarded' in r && r.discarded === 'tooFast') voided = { kind: h.kind, at: Date.now() };
       await clearPersisted();
       publishNow();
@@ -679,7 +670,6 @@ export const recorder = {
     kind = h.kind;
     localId = h.localId;
     startedAt = h.startedAt;
-    groupSessionId = h.groupSessionId;
     backgroundGapMs = h.backgroundGapMs ?? 0;
     for (const p of saved) appendPoint(p);
     persistedFullChunks = Math.floor(points.length / RECORDER.chunkSize);

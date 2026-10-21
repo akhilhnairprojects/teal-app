@@ -28,7 +28,6 @@ jest.mock('@/backend/client', () => jest.requireActual('@/backend/testing/mockSu
 
 const ME = '11111111-1111-4111-8111-111111111111';
 const YOU = '22222222-2222-4222-8222-222222222222';
-const GROUP = '33333333-3333-4333-8333-333333333333';
 const RUN_SHARED = '44444444-4444-4444-8444-444444444444';
 const RUN_PRIVATE = '55555555-5555-4555-8555-555555555555';
 
@@ -50,7 +49,7 @@ const row = (rank: number, userId: string, nickname: string, value: number, isMe
   is_me: isMe,
 });
 
-const PARAMS: LeaderboardsScreenParams = { board: null, period: null, scope: null, groupId: null };
+const PARAMS: LeaderboardsScreenParams = { board: null, period: null, scope: null };
 
 const rpcCalls = (fn: string) => mockSupabase.raw.rpc.mock.calls.filter(([name]) => name === fn);
 
@@ -65,9 +64,6 @@ beforeEach(() => {
   mockAuthState.current = { status: 'signedIn', userId: ME, profile: { nickname: 'Ana' } };
   resetLeaderboardCachesForTests();
   resetMapOverlays();
-  mockSupabase.onRpc('list_my_groups', () => ({
-    data: [{ id: GROUP, name: 'Tuesday crew', role: 'member', member_count: 4, invite_code: 'ABCDEFGH', created_at: '2026-10-01T12:00:00+00:00' }],
-  }));
   mockSupabase.onRpc('get_leaderboard', (args) =>
     args.p_board === 'run_5k'
       ? { data: [row(1, YOU, 'Bo', 1_200_000)] }
@@ -100,7 +96,7 @@ describe('LeaderboardsScreen', () => {
     await withScreen(<LeaderboardsScreen params={PARAMS} />, async (r) => {
       await waitForText(r, 'Running distance', 'Bo', '12.43 mi', 'Ana (you)', '1.00 mi', 'Featured runs', '5K · 20:00', 'Last week’s champions', 'Dee');
       expect(textOf(r)).toContain('Resets');
-      expect(textOf(r)).toContain('Tuesday crew');
+      expect(textOf(r)).not.toContain('Group');
       const start = periodStart('week', Date.now());
       expect(rpcCalls('get_leaderboard')[0][1]).toEqual({
         p_board: 'run_distance',
@@ -129,17 +125,17 @@ describe('LeaderboardsScreen', () => {
   });
 
   it('switches boards and scopes without refetching a board seen in the last minute', async () => {
-    await withScreen(<LeaderboardsScreen params={{ ...PARAMS, scope: 'group', groupId: GROUP }} />, async (r) => {
+    await withScreen(<LeaderboardsScreen params={{ ...PARAMS, scope: 'friends' }} />, async (r) => {
       await waitUntil(() => rpcCalls('get_leaderboard').length === 1);
-      expect(rpcCalls('get_leaderboard')[0][1]).toMatchObject({ p_scope: 'group', p_group_id: GROUP });
+      expect(rpcCalls('get_leaderboard')[0][1]).toMatchObject({ p_scope: 'friends', p_group_id: null });
       await press(r, 'lb-board-run_5k');
       await waitForText(r, 'Fastest 5K', '20:00', 'Eve');
       await press(r, 'lb-board-run_distance');
       await waitForText(r, 'Running distance', '12.43 mi');
       expect(rpcCalls('get_leaderboard')).toHaveLength(2);
-      await press(r, 'lb-scope-friends');
+      await press(r, 'lb-scope-global');
       await waitUntil(() => rpcCalls('get_leaderboard').length === 3);
-      expect(rpcCalls('get_leaderboard')[2][1]).toMatchObject({ p_scope: 'friends', p_group_id: null });
+      expect(rpcCalls('get_leaderboard')[2][1]).toMatchObject({ p_scope: 'global', p_group_id: null });
     });
   });
 

@@ -12,7 +12,7 @@ import {
   formatBoardValue,
   previousPeriodStart,
   resetCountdown,
-  scopeChips,
+  SCOPE_CHIPS,
   splitMyRow,
 } from '../leaderboardModel';
 
@@ -77,11 +77,9 @@ describe('periods', () => {
 });
 
 describe('chips and cards', () => {
-  it('lists Everyone, Friends, then each group', () => {
-    const chips = scopeChips([{ id: 'g1', name: 'Tuesday crew' }]);
-    expect(chips.map((c) => c.label)).toEqual(['Everyone', 'Friends', 'Tuesday crew']);
-    expect(chips[2].scope).toEqual({ kind: 'group', groupId: 'g1' });
-    expect(boardQueryKey({ board: 'run_5k', period: 'week', periodStart: '2026-10-19', scope: chips[2].scope })).toBe('run_5k|week|2026-10-19|group:g1');
+  it('lists Everyone and Friends', () => {
+    expect(SCOPE_CHIPS.map((c) => c.label)).toEqual(['Everyone', 'Friends']);
+    expect(boardQueryKey({ board: 'run_5k', period: 'week', periodStart: '2026-10-19', scope: SCOPE_CHIPS[1].scope })).toBe('run_5k|week|2026-10-19|friends');
   });
 
   it('describes a featured run with its date only', () => {

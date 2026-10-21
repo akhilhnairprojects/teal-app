@@ -52,7 +52,6 @@ const IDLE: RecorderSnapshot = {
     vehicleSuspected: false,
   },
   recentPath: [],
-  groupSessionId: null,
   backgroundGapMs: 0,
   warnings: [],
 };
@@ -112,7 +111,7 @@ beforeEach(async () => {
 
 describe('RecordScreen', () => {
   it('warns while too fast, and explains a run deleted for speed', async () => {
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'recording', kind: 'run', warnings: ['tooFast'] });
       await waitForText(r, 'the run will be deleted');
       setSnap({ voided: { kind: 'run', at: 0 } });
@@ -124,7 +123,7 @@ describe('RecordScreen', () => {
   });
 
   it('explains the Expo Go limits on the first start, then starts the chosen kind', async () => {
-    await withScreen(<RecordScreen initialKind="bike" sessionId="s1" />, async (r) => {
+    await withScreen(<RecordScreen initialKind="bike" />, async (r) => {
       await waitUntil(() => r.root.findAllByProps({ testID: 'record-start' }).some((n) => n.props.disabled === false));
       expect(textOf(r)).toContain('Teal records only while it’s open on screen.');
       expect(textOf(r)).toContain(RECORD_COPY.findDock);
@@ -133,19 +132,19 @@ describe('RecordScreen', () => {
       expect(recorder.start).not.toHaveBeenCalled();
       await press(r, 'record-intro-confirm');
       await waitUntil(() => recorder.start.mock.calls.length > 0);
-      expect(recorder.start).toHaveBeenCalledWith({ kind: 'bike', groupSessionId: 's1' });
+      expect(recorder.start).toHaveBeenCalledWith({ kind: 'bike' });
     });
     // The intro is remembered.
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       await waitUntil(() => r.root.findAllByProps({ testID: 'record-start' }).some((n) => n.props.disabled === false));
       await press(r, 'record-start');
       await waitUntil(() => recorder.start.mock.calls.length > 1);
-      expect(recorder.start).toHaveBeenLastCalledWith({ kind: 'run', groupSessionId: null });
+      expect(recorder.start).toHaveBeenLastCalledWith({ kind: 'run' });
     });
   });
 
   it('shows live run stats, the screen-on chip, banners and the live track', async () => {
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({
         phase: 'recording',
         kind: 'run',
@@ -164,7 +163,7 @@ describe('RecordScreen', () => {
   });
 
   it('shows bike speed and a dock button', async () => {
-    await withScreen(<RecordScreen initialKind="bike" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="bike" />, async (r) => {
       setSnap({ phase: 'recording', kind: 'bike', stats: { ...IDLE.stats, currentPaceSecPerKm: 180, gpsQuality: 'fair' }, warnings: ['vehicleSegment'] });
       await waitForText(r, 'Speed', '12.4 mph', RECORD_COPY.vehicle, 'GPS fair');
       await press(r, 'record-find-dock');
@@ -179,7 +178,6 @@ describe('RecordScreen', () => {
       startedAt: 0,
       endedAt: 0,
       ownerUserId: null,
-      groupSessionId: null,
       shareRoute: false,
       metrics: { distanceM: 3218.688, excludedM: 0, elapsedMs: 1_500_000, movingMs: 1_440_000, efforts: [], isLoop: false, loopGapM: null, medianDtMs: 1000 },
       previewPolyline: '',
@@ -190,7 +188,7 @@ describe('RecordScreen', () => {
       mockSnap.listeners.forEach((l) => l());
       return saved;
     });
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'recording', kind: 'run', recentPath: PATH, warnings: ['foregroundOnly'] });
       await waitForText(r, RECORD_COPY.holdToFinish);
       const hold = r.root.findAll((n) => n.props.testID === 'record-finish' && typeof n.props.onLongPress === 'function')[0];
@@ -211,7 +209,7 @@ describe('RecordScreen', () => {
   });
 
   it('says when a recording was too short to save, and keeps going on request', async () => {
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'recording', kind: 'run' });
       await waitForText(r, RECORD_COPY.holdToFinish);
       act(() => r.root.findAll((n) => n.props.testID === 'record-finish' && typeof n.props.onLongPress === 'function')[0].props.onLongPress());
@@ -240,7 +238,7 @@ describe('RecordScreen', () => {
       order.push('finish');
       return { discarded: 'tooShort' };
     });
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'recording', kind: 'run' });
       await waitForText(r, RECORD_COPY.holdToFinish);
       act(() => r.root.findAll((n) => n.props.testID === 'record-finish' && typeof n.props.onLongPress === 'function')[0].props.onLongPress());
@@ -258,7 +256,7 @@ describe('RecordScreen', () => {
       userId: 'u1',
       profile: { id: 'u1', nickname: 'ana', color: 1, inviteCode: 'ABCDEFGH', territoryOptIn: true, territoryNoticeSeen: true },
     };
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'recording', kind: 'run' });
       await waitForText(r, RECORD_COPY.holdToFinish);
       act(() => r.root.findAll((n) => n.props.testID === 'record-finish' && typeof n.props.onLongPress === 'function')[0].props.onLongPress());
@@ -272,7 +270,7 @@ describe('RecordScreen', () => {
       ok: false,
       error: { code: 'forbidden', message: 'Teal needs location access to record. You can turn it on in Settings.', retryable: false },
     }));
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'paused', kind: 'run', warnings: ['gpsStopped', 'permissionDenied'] });
       await waitForText(r, RECORD_COPY.gpsStopped, RECORD_COPY.permissionDenied);
       await press(r, 'record-resume');
@@ -282,7 +280,7 @@ describe('RecordScreen', () => {
 
   it('offers to resolve an unfinished recording on the record screen', async () => {
     recorder.pendingRecovery.mockImplementationOnce(async () => ({ kind: 'run', startedAt: 0, points: 42 }));
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       await waitForText(r, 'Resume or save your unfinished run?', '42 points were saved.');
       await press(r, 'record-recovery-save');
       expect(recorder.recover).toHaveBeenCalledWith('save');
@@ -290,7 +288,7 @@ describe('RecordScreen', () => {
   });
 
   it('links to Settings when location permission is denied', async () => {
-    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+    await withScreen(<RecordScreen initialKind="run" />, async (r) => {
       setSnap({ phase: 'idle', warnings: ['permissionDenied'] });
       await waitForText(r, RECORD_COPY.permissionDenied, RECORD_COPY.openSettings);
     });

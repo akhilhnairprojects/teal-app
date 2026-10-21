@@ -53,7 +53,6 @@ const local = (localId: string, o: Partial<LocalActivity> = {}): LocalActivity =
   startedAt: STARTED,
   endedAt: STARTED + 1_650_000,
   ownerUserId: null,
-  groupSessionId: null,
   shareRoute: false,
   metrics: METRICS,
   previewPolyline: '',
@@ -78,7 +77,6 @@ const serverRow = (o: Record<string, unknown> = {}) => ({
   is_loop: false,
   leaderboard_eligible: true,
   share_route: false,
-  group_session_id: null,
   efforts: [],
   ...o,
 });
@@ -100,7 +98,6 @@ const flaggedServer: ServerActivity = {
   isLoop: false,
   leaderboardEligible: false,
   shareRoute: false,
-  groupSessionId: null,
   efforts: [],
 };
 

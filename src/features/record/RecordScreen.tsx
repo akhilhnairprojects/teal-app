@@ -28,7 +28,7 @@ type Outcome = { saved: LocalActivity } | { discarded: true };
  * Record a run or a Bluebike ride (spec §5 G2). Expo Go records only while Teal is open, so the
  * first start explains it, a chip stays on screen while recording, and background gaps are reported.
  */
-export function RecordScreen({ initialKind, sessionId }: { initialKind: ActivityKind | null; sessionId: string | null }) {
+export function RecordScreen({ initialKind }: { initialKind: ActivityKind | null }) {
   if (Platform.OS === 'web') {
     return (
       <SheetPage title="Record" onBack={goBack}>
@@ -36,21 +36,21 @@ export function RecordScreen({ initialKind, sessionId }: { initialKind: Activity
       </SheetPage>
     );
   }
-  return <RecordNative initialKind={initialKind} sessionId={sessionId} />;
+  return <RecordNative initialKind={initialKind} />;
 }
 
-function RecordNative({ initialKind, sessionId }: { initialKind: ActivityKind | null; sessionId: string | null }) {
+function RecordNative({ initialKind }: { initialKind: ActivityKind | null }) {
   const snap = useRecorder();
   const active = isActivePhase(snap.phase);
   const title = active && snap.kind ? `Recording · ${kindLabel(snap.kind)}` : 'Record';
   return (
     <SheetPage title={title} onBack={goBack}>
-      <RecordBody initialKind={initialKind} sessionId={sessionId} />
+      <RecordBody initialKind={initialKind} />
     </SheetPage>
   );
 }
 
-function RecordBody({ initialKind, sessionId }: { initialKind: ActivityKind | null; sessionId: string | null }) {
+function RecordBody({ initialKind }: { initialKind: ActivityKind | null }) {
   const c = usePalette();
   const s = styles(c);
   const snap = useRecorder();
@@ -119,7 +119,7 @@ function RecordBody({ initialKind, sessionId }: { initialKind: ActivityKind | nu
     setOutcome(null);
     setShare(false);
     setReview(null);
-    const r = await recorder.start({ kind, groupSessionId: sessionId });
+    const r = await recorder.start({ kind });
     setBusy(false);
     if (!r.ok) setError(r.error.message);
   };
@@ -311,22 +311,25 @@ function RecordBody({ initialKind, sessionId }: { initialKind: ActivityKind | nu
 
 /**
  * The territory estimate for a saved run (spec G4 preview, the server's claim rules), or null.
- * Signed out, territory off, or the notice not yet seen: the server claims nothing, so no estimate.
+ * Signed in with territory off or the notice not yet seen, the server claims nothing, so no estimate;
+ * signed out, the run claims squares on this phone (the territory page shows them).
  */
 function useClaimPreviewText(a: LocalActivity | null, profile: MyProfile | null): string | null {
   const [text, setText] = useState<{ id: string; text: string | null } | null>(null);
-  const optedIn = profile !== null && profile.territoryOptIn && profile.territoryNoticeSeen;
+  // Signed out, territory stays on this phone and needs no opt-in.
+  const local = profile === null;
+  const optedIn = local || (profile.territoryOptIn && profile.territoryNoticeSeen);
   const id = a && a.kind === 'run' && a.metrics.isLoop && optedIn ? a.localId : null;
   useEffect(() => {
     if (!id) return;
     let live = true;
     void getLocalPoints(id).then((points) => {
-      if (live && points) setText({ id, text: previewClaimText(previewClaim(points, { optedIn: true })) });
+      if (live && points) setText({ id, text: previewClaimText(previewClaim(points, { optedIn: true }), { local }) });
     });
     return () => {
       live = false;
     };
-  }, [id]);
+  }, [id, local]);
   return id && text?.id === id ? text.text : null;
 }
 

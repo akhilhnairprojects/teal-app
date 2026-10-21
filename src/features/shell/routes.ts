@@ -127,43 +127,37 @@ export function safeNext(v: string | null | undefined): string | null {
 export const signInPath = (o: { next?: string | null } = {}): Href => withQuery('/account/sign-in', { next: safeNext(o.next) });
 export const parseSignInParams = (p: { next?: Param }): { next: string | null } => ({ next: safeNext(firstParam(p.next)) });
 
-// /record?kind&sessionId
+// /record?kind
 const KINDS: readonly ActivityKind[] = ['run', 'bike'];
-export const recordPath = (o: { kind: ActivityKind; sessionId?: string | null }): Href =>
-  withQuery('/record', { kind: o.kind, sessionId: o.sessionId });
-export function parseRecordParams(p: { kind?: Param; sessionId?: Param }): { kind: ActivityKind | null; sessionId: string | null } {
+export const recordPath = (o: { kind: ActivityKind }): Href => withQuery('/record', { kind: o.kind });
+export function parseRecordParams(p: { kind?: Param }): { kind: ActivityKind | null } {
   const k = firstParam(p.kind);
-  return { kind: KINDS.includes(k as ActivityKind) ? (k as ActivityKind) : null, sessionId: firstParam(p.sessionId) || null };
+  return { kind: KINDS.includes(k as ActivityKind) ? (k as ActivityKind) : null };
 }
 
 // /activity/[activityId]
 export const activityPath = (localId: string): Href => `/activity/${enc(localId)}` as Href;
 export const parseActivityParams = (p: { activityId?: Param }): string | null => firstParam(p.activityId) || null;
 
-// /leaderboards?board&period&scope&groupId
+// /leaderboards?board&period&scope
 const BOARDS: readonly BoardId[] = ['run_1k', 'run_5k', 'run_10k', 'run_distance', 'bike_distance'];
 const PERIODS: readonly PeriodKind[] = ['week', 'month'];
-export type LeaderboardScopeParam = 'global' | 'friends' | 'group';
-const SCOPES: readonly LeaderboardScopeParam[] = ['global', 'friends', 'group'];
-export type LeaderboardsParams = { board?: BoardId; period?: PeriodKind; scope?: LeaderboardScopeParam; groupId?: string };
-export const leaderboardsPath = (o: LeaderboardsParams = {}): Href =>
-  withQuery('/leaderboards', { board: o.board, period: o.period, scope: o.scope, groupId: o.scope === 'group' ? o.groupId : undefined });
-export function parseLeaderboardsParams(p: { board?: Param; period?: Param; scope?: Param; groupId?: Param }): {
+export type LeaderboardScopeParam = 'global' | 'friends';
+const SCOPES: readonly LeaderboardScopeParam[] = ['global', 'friends'];
+export type LeaderboardsParams = { board?: BoardId; period?: PeriodKind; scope?: LeaderboardScopeParam };
+export const leaderboardsPath = (o: LeaderboardsParams = {}): Href => withQuery('/leaderboards', { board: o.board, period: o.period, scope: o.scope });
+export function parseLeaderboardsParams(p: { board?: Param; period?: Param; scope?: Param }): {
   board: BoardId | null;
   period: PeriodKind | null;
   scope: LeaderboardScopeParam | null;
-  groupId: string | null;
 } {
   const board = firstParam(p.board);
   const period = firstParam(p.period);
   const scope = firstParam(p.scope);
-  const groupId = firstParam(p.groupId) || null;
-  const s = SCOPES.includes(scope as LeaderboardScopeParam) ? (scope as LeaderboardScopeParam) : null;
   return {
     board: BOARDS.includes(board as BoardId) ? (board as BoardId) : null,
     period: PERIODS.includes(period as PeriodKind) ? (period as PeriodKind) : null,
-    scope: s === 'group' && !groupId ? null : s,
-    groupId: s === 'group' ? groupId : null,
+    scope: SCOPES.includes(scope as LeaderboardScopeParam) ? (scope as LeaderboardScopeParam) : null,
   };
 }
 
@@ -187,18 +181,6 @@ const parseCode = (p: Param): string | null => {
 // /friend/[code]
 export const friendInvitePath = (code: string): Href => `/friend/${enc(code)}` as Href;
 export const parseFriendInviteParams = (p: { code?: Param }): string | null => parseCode(p.code);
-
-// /group/[groupId]
-export const groupPath = (id: string): Href => `/group/${enc(id)}` as Href;
-export const parseGroupParams = (p: { groupId?: Param }): string | null => firstParam(p.groupId) || null;
-
-// /join/[code]
-export const joinGroupPath = (code: string): Href => `/join/${enc(code)}` as Href;
-export const parseJoinGroupParams = (p: { code?: Param }): string | null => parseCode(p.code);
-
-// /session/[sessionId]
-export const sessionPath = (id: string): Href => `/session/${enc(id)}` as Href;
-export const parseSessionParams = (p: { sessionId?: Param }): string | null => firstParam(p.sessionId) || null;
 
 // /territory?month
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])-01$/;

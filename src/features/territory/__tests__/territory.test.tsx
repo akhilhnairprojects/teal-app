@@ -1,12 +1,18 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
 import { act, type ReactTestRenderer } from 'react-test-renderer';
 
+import { loopRun } from '@/activity/__fixtures__/tracks';
+import { computeTrackMetrics } from '@/activity/metrics';
 import { periodStart } from '@/activity/periods';
+import { resetActivityStoreForTests, saveNewActivity } from '@/activity/store';
 import { mockSupabase } from '@/backend/testing/mockSupabase';
 import { flush, textOf, waitForText, waitUntil, withScreen } from '@/mbta/testing/render';
 import { getActiveMapOverlay, resetMapOverlays } from '@/state/mapOverlay';
 import { OWNER_COLORS } from '@/territory/api';
 import { cellId } from '@/territory/grid';
+import { resetLocalTerritoryForTests } from '@/territory/local';
+import { previewClaim } from '@/territory/preview';
 import { resetTerritoryForTests, setTerritoryShown, TERRITORY_DEBOUNCE_MS, useTerritoryShown } from '@/territory/useTerritory';
 
 import { ownerColor, withAlpha } from '../ownerColor';
@@ -58,7 +64,30 @@ const auth = jest.requireMock('@/backend/auth') as { updateMySettings: jest.Mock
 
 const REGION = { latitude: 42.356, longitude: -71.062, latitudeDelta: 0.02, longitudeDelta: 0.02 };
 
-beforeEach(() => {
+/** Save a loop run on this phone, recorded signed out, at `startedAt`. */
+async function saveLoopOnPhone(startedAt: number) {
+  const points = loopRun();
+  await saveNewActivity(
+    {
+      localId: 'loop-1',
+      kind: 'run',
+      startedAt,
+      endedAt: startedAt + points[points.length - 1].t,
+      ownerUserId: null,
+      shareRoute: false,
+      metrics: computeTrackMetrics(points, 'run'),
+      previewPolyline: '',
+      sync: { state: 'local', attempts: 0, nextAttemptAt: null, lastError: null, server: null },
+    },
+    points,
+  );
+  return previewClaim(points).cellIds.length;
+}
+
+beforeEach(async () => {
+  await AsyncStorage.clear();
+  resetActivityStoreForTests();
+  resetLocalTerritoryForTests();
   mockSupabase.reset();
   resetTerritoryForTests();
   resetMapOverlays();
@@ -147,17 +176,36 @@ describe('TerritoryLayer', () => {
     });
   });
 
-  it('fetches nothing when signed out', async () => {
+  it('signed out, draws the squares of the loops on this phone without asking the server', async () => {
     mockAuthState.current = { status: 'signedOut' };
     await withScreen(<TerritoryLayer month="2026-10-01" region={REGION} />, async (r) => {
       await advance(TERRITORY_DEBOUNCE_MS * 2);
-      expect(mockSupabase.raw.rpc).not.toHaveBeenCalled();
       expect(polygons(r)).toHaveLength(0);
+      await act(async () => {
+        await saveLoopOnPhone(Date.UTC(2026, 9, 20, 13));
+      });
+      await advance(0);
+      await waitUntil(() => polygons(r).length > 0);
+      expect(polygons(r).every((p) => p.props.strokeWidth > 0)).toBe(true); // all mine
+      expect(mockSupabase.raw.rpc).not.toHaveBeenCalled();
     });
   });
 });
 
 describe('TerritoryScreen', () => {
+  it('works without an account: my squares from this phone, no sign-in or standings', async () => {
+    mockAuthState.current = { status: 'signedOut' };
+    const n = await saveLoopOnPhone(Date.now() - 60_000);
+    await withScreen(<TerritoryScreen month={null} />, async (r) => {
+      await waitForText(r, `You hold ${squaresLabel(n)}`, TERRITORY_COPY.localNote, TERRITORY_COPY.howTo);
+      const text = textOf(r);
+      expect(text).not.toContain('Sign in');
+      expect(text).not.toContain('champions');
+      expect(getActiveMapOverlay()?.territory?.month).toBe(periodStart('month', Date.now()));
+      expect(mockSupabase.raw.rpc).not.toHaveBeenCalled();
+    });
+  });
+
   const standings = (month: string) => [
     { rank: 1, user_id: RIVAL, nickname: 'Bo', color: 4, cells: 120, is_me: false },
     { rank: 2, user_id: ME, nickname: 'Ana', color: 2, cells: 64, is_me: true },

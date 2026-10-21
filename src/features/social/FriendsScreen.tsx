@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Share, StyleSheet, Text, View } from 'react-native';
@@ -6,7 +5,7 @@ import { Alert, Share, StyleSheet, Text, View } from 'react-native';
 import { formatDistanceM, useUnits } from '@/activity/format';
 import type { MyProfile } from '@/backend/auth';
 import { SignInGate } from '@/features/account/SignInGate';
-import { goBack, groupPath, INVITE_CODE_PATTERN, leaderboardsPath, PATHS } from '@/features/shell/routes';
+import { goBack, INVITE_CODE_PATTERN, leaderboardsPath, PATHS } from '@/features/shell/routes';
 import {
   blockUser,
   friendInviteLink,
@@ -18,7 +17,6 @@ import {
   sendFriendRequest,
   type Friend,
 } from '@/social/friends';
-import { createGroup, joinGroup, listMyGroups, type Group } from '@/social/groups';
 import { fonts, usePalette } from '@/theme';
 import { SheetPage, SheetScrollView } from '@/ui';
 
@@ -27,7 +25,7 @@ import { Body, Button, Card, Field, Loading, Notice, PersonRow, SectionTitle, so
 
 export function FriendsScreen() {
   return (
-    <SheetPage title="Friends & groups" onBack={goBack}>
+    <SheetPage title="Friends" onBack={goBack}>
       <SignInGate next={PATHS.friends}>{(profile) => <FriendsBody profile={profile} />}</SignInGate>
     </SheetPage>
   );
@@ -39,21 +37,16 @@ function FriendsBody({ profile }: { profile: MyProfile }) {
   const c = usePalette();
   const [units] = useUnits();
   const [friends, setFriends] = useState<Friend[] | null>(null);
-  const [groups, setGroups] = useState<Group[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [code, setCode] = useState(profile.inviteCode);
   const [addInput, setAddInput] = useState('');
   const [addMsg, setAddMsg] = useState<Msg>(null);
-  const [groupName, setGroupName] = useState('');
-  const [groupCode, setGroupCode] = useState('');
-  const [groupMsg, setGroupMsg] = useState<Msg>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [f, g] = await Promise.all([listFriends(), listMyGroups()]);
+    const f = await listFriends();
     if (f.ok) setFriends(f.value);
-    if (g.ok) setGroups(g.value);
-    setLoadError(!f.ok ? f.error.message : !g.ok ? g.error.message : null);
+    setLoadError(f.ok ? null : f.error.message);
   }, []);
 
   useFocusEffect(
@@ -136,26 +129,6 @@ function FriendsBody({ profile }: { profile: MyProfile }) {
       },
       { text: 'Close', style: 'cancel' },
     ]);
-
-  const create = () =>
-    act('create', async () => {
-      const name = groupName.trim();
-      if (!name) return setGroupMsg({ text: 'Give the group a name.', tone: 'error' });
-      const r = await createGroup(name);
-      if (!r.ok) return setGroupMsg({ text: r.error.message, tone: 'error' });
-      setGroupName('');
-      setGroupMsg(null);
-      router.push(groupPath(r.value));
-    });
-
-  const join = () =>
-    act('join', async () => {
-      const r = await joinGroup(groupCode);
-      if (!r.ok) return setGroupMsg({ text: r.error.code === 'not_found' ? 'No group found with that code.' : r.error.message, tone: 'error' });
-      setGroupCode('');
-      setGroupMsg(null);
-      router.push(groupPath(r.value));
-    });
 
   const sections = friends ? friendSections(friends) : null;
 
@@ -250,49 +223,6 @@ function FriendsBody({ profile }: { profile: MyProfile }) {
         </>
       ) : null}
 
-      <SectionTitle>Groups</SectionTitle>
-      <Card testID="groups-list">
-        {!groups ? (
-          loadError ? null : <Loading />
-        ) : groups.length === 0 ? (
-          <Body muted>Groups have their own leaderboard and run-together sessions.</Body>
-        ) : (
-          groups.map((g, i) => (
-            <PersonRow
-              key={g.id}
-              name={g.name}
-              detail={`${g.memberCount} ${g.memberCount === 1 ? 'member' : 'members'}${g.role === 'owner' ? ' · owner' : ''}`}
-              divider={i > 0}
-              onPress={() => router.push(groupPath(g.id))}
-              testID={`group-${g.id}`}
-              right={<Ionicons name="chevron-forward" size={16} color={c.textMuted} />}
-            />
-          ))
-        )}
-      </Card>
-      <Card testID="groups-create">
-        <View style={styles.inline}>
-          <View style={styles.flex}>
-            <Field label="New group name" value={groupName} onChangeText={setGroupName} maxLength={40} testID="groups-create-input" />
-          </View>
-          <Button label="Create" small onPress={() => void create()} busy={busy === 'create'} disabled={!groupName.trim()} />
-        </View>
-        <View style={styles.inline}>
-          <View style={styles.flex}>
-            <Field
-              label="Group code"
-              value={groupCode}
-              onChangeText={setGroupCode}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              maxLength={8}
-              testID="groups-join-input"
-            />
-          </View>
-          <Button label="Join" small onPress={() => void join()} busy={busy === 'join'} disabled={groupCode.trim().length !== 8} />
-        </View>
-        <Notice text={groupMsg?.text ?? null} tone={groupMsg?.tone} />
-      </Card>
     </SheetScrollView>
   );
 }
@@ -301,6 +231,4 @@ const styles = StyleSheet.create({
   code: { fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: 4 },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   value: { fontFamily: fonts.bold, fontSize: 15, fontVariant: ['tabular-nums'] },
-  inline: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  flex: { flex: 1 },
 });

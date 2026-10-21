@@ -19,7 +19,7 @@ export { TERRITORY_EXPLANATION };
 /** The typed word that confirms "Delete my data". */
 export const DELETE_CONFIRM_WORD = 'DELETE';
 
-type NotifyKey = 'notifyOvertake' | 'notifySessions' | 'notifyFriendRequests';
+type NotifyKey = 'notifyOvertake' | 'notifyFriendRequests';
 
 export function AccountScreen() {
   return (
@@ -129,13 +129,6 @@ function AccountBody({ profile }: { profile: MyProfile }) {
           onChange={(v) => void setNotify('notifyOvertake', v)}
         />
         <ToggleRow
-          testID="account-notify-sessions"
-          label="Group sessions start"
-          value={profile.notifySessions}
-          disabled={saving}
-          onChange={(v) => void setNotify('notifySessions', v)}
-        />
-        <ToggleRow
           testID="account-notify-friends"
           label="Friend requests"
           value={profile.notifyFriendRequests}
@@ -165,7 +158,7 @@ function AccountBody({ profile }: { profile: MyProfile }) {
       <Card testID="account-delete">
         <Text style={[styles.dangerTitle, { color: c.danger }]}>Delete my data</Text>
         <Body muted>
-          Deletes your account, activities, friends, groups and territory from Teal’s server, and every activity stored on this phone. This
+          Deletes your account, activities, friends and territory from Teal’s server, and every activity stored on this phone. This
           can’t be undone. Type {DELETE_CONFIRM_WORD} to confirm.
         </Body>
         <Field

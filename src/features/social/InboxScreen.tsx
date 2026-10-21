@@ -63,7 +63,7 @@ function InboxBody() {
 
   if (!items) return error ? <Notice text={error} /> : <Loading />;
   if (items.length === 0) {
-    return <EmptyState icon="mail-outline" title="Nothing here yet" message="Friend requests, group sessions and friends passing you show up here." />;
+    return <EmptyState icon="mail-outline" title="Nothing here yet" message="Friend requests and friends passing you show up here." />;
   }
   return (
     <SheetScrollView contentContainerStyle={socialStyles.content}>

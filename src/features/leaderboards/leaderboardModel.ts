@@ -4,7 +4,6 @@
  */
 import { formatDistanceM, formatDurationMs, type Units } from '@/activity/format';
 import { periodEndMs, shiftPeriod, type PeriodKind } from '@/activity/periods';
-import type { Group } from '@/social/groups';
 import { BOARD_IDS, BOARD_META, type BoardId, type BoardScope, type FeaturedRun, type Leaderboard, type LeaderboardRow } from '@/social/leaderboards';
 
 import { effortLabel, shortDay } from '@/features/activities/activityModel';
@@ -59,16 +58,13 @@ export const previousPeriodStart = (period: PeriodKind, start: string): string =
 
 export type ScopeChip = { key: string; label: string; scope: BoardScope };
 
-/** Everyone · Friends · each of my groups. */
-export function scopeChips(groups: readonly Pick<Group, 'id' | 'name'>[]): ScopeChip[] {
-  return [
-    { key: 'global', label: 'Everyone', scope: { kind: 'global' } },
-    { key: 'friends', label: 'Friends', scope: { kind: 'friends' } },
-    ...groups.map((g) => ({ key: `group:${g.id}`, label: g.name, scope: { kind: 'group', groupId: g.id } as BoardScope })),
-  ];
-}
+/** Everyone · Friends. */
+export const SCOPE_CHIPS: readonly ScopeChip[] = [
+  { key: 'global', label: 'Everyone', scope: { kind: 'global' } },
+  { key: 'friends', label: 'Friends', scope: { kind: 'friends' } },
+];
 
-export const scopeKey = (s: BoardScope): string => (s.kind === 'group' ? `group:${s.groupId}` : s.kind);
+export const scopeKey = (s: BoardScope): string => s.kind;
 
 export function emptyBoardText(board: BoardId, period: PeriodKind): string {
   const when = period === 'week' ? 'this week' : 'this month';

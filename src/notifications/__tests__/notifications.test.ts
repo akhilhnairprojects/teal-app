@@ -134,11 +134,10 @@ describe('tap routing', () => {
   it('routes only known Teal paths', () => {
     expect(notificationHref('/friends')).toBe('/friends');
     expect(notificationHref('/inbox')).toBe('/inbox');
-    expect(notificationHref('/session/abc')).toBe('/session/abc');
     expect(notificationHref('/leaderboards?board=run_5k')).toBe('/leaderboards?board=run_5k');
     expect(notificationHref('/park?toName=x')).toBe('/park?toName=x');
     expect(notificationHref('/territory')).toBe('/territory');
-    expect(notificationHref('/session/')).toBeNull();
+    expect(notificationHref('/session/abc')).toBeNull(); // group runs aren't in the app
     expect(notificationHref('/friendsX')).toBeNull();
     expect(notificationHref('https://evil.example/friends')).toBeNull();
     expect(notificationHref('//evil.example')).toBeNull();

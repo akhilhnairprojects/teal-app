@@ -4,25 +4,19 @@ import {
   activityPath,
   friendInvitePath,
   friendsPath,
-  groupPath,
   inboxPath,
-  joinGroupPath,
   leaderboardsPath,
   movePath,
   nicknamePath,
   parkPath,
   parseActivityParams,
   parseFriendInviteParams,
-  parseGroupParams,
-  parseJoinGroupParams,
   parseLeaderboardsParams,
   parseParkParams,
   parseRecordParams,
-  parseSessionParams,
   parseSignInParams,
   parseTerritoryParams,
   recordPath,
-  sessionPath,
   signInPath,
   territoryPath,
   alertPath,
@@ -173,10 +167,10 @@ describe('gamification routes (spec §3.2)', () => {
   });
 
   it('round-trips record, activity and park params', () => {
-    const r = recordPath({ kind: 'bike', sessionId: 's-1' });
-    expect(r).toBe('/record?kind=bike&sessionId=s-1');
-    expect(parseRecordParams(paramsOf(r))).toEqual({ kind: 'bike', sessionId: 's-1' });
-    expect(parseRecordParams({ kind: 'walk' })).toEqual({ kind: null, sessionId: null });
+    const r = recordPath({ kind: 'bike' });
+    expect(r).toBe('/record?kind=bike');
+    expect(parseRecordParams(paramsOf(r))).toEqual({ kind: 'bike' });
+    expect(parseRecordParams({ kind: 'walk' })).toEqual({ kind: null });
     const a = activityPath('local/1');
     expect(parseActivityParams({ activityId: lastSegment(a) })).toBe('local/1');
     const p = parkPath({ toName: 'Fenway Park', toLat: 42.3467, toLon: -71.0972 });
@@ -185,22 +179,17 @@ describe('gamification routes (spec §3.2)', () => {
     expect(parkPath()).toBe('/park');
   });
 
-  it('round-trips leaderboard params; a group scope needs a group id', () => {
-    const h = leaderboardsPath({ board: 'run_5k', period: 'month', scope: 'group', groupId: 'g1' });
-    expect(parseLeaderboardsParams(paramsOf(h))).toEqual({ board: 'run_5k', period: 'month', scope: 'group', groupId: 'g1' });
-    expect(leaderboardsPath({ scope: 'friends', groupId: 'ignored' })).toBe('/leaderboards?scope=friends');
-    expect(parseLeaderboardsParams({ board: 'fastest', period: 'year', scope: 'group' })).toEqual({ board: null, period: null, scope: null, groupId: null });
+  it('round-trips leaderboard params', () => {
+    const h = leaderboardsPath({ board: 'run_5k', period: 'month', scope: 'friends' });
+    expect(parseLeaderboardsParams(paramsOf(h))).toEqual({ board: 'run_5k', period: 'month', scope: 'friends' });
+    expect(parseLeaderboardsParams({ board: 'fastest', period: 'year', scope: 'group' })).toEqual({ board: null, period: null, scope: null });
     expect(leaderboardsPath()).toBe('/leaderboards');
   });
 
-  it('round-trips invite codes, groups, sessions and territory months', () => {
+  it('round-trips invite codes and territory months', () => {
     expect(friendInvitePath('ABCDEFGH')).toBe('/friend/ABCDEFGH');
     expect(parseFriendInviteParams({ code: lastSegment(friendInvitePath('abcdefgh')) })).toBe('ABCDEFGH');
     expect(parseFriendInviteParams({ code: 'ABC' })).toBeNull();
-    expect(joinGroupPath('K7M2P9QX')).toBe('/join/K7M2P9QX');
-    expect(parseJoinGroupParams({ code: lastSegment(joinGroupPath('K7M2P9QX')) })).toBe('K7M2P9QX');
-    expect(parseGroupParams({ groupId: lastSegment(groupPath('g 1')) })).toBe('g 1');
-    expect(parseSessionParams({ sessionId: lastSegment(sessionPath('s1')) })).toBe('s1');
     expect(parseTerritoryParams(paramsOf(territoryPath({ month: '2026-10-01' })))).toEqual({ month: '2026-10-01' });
     expect(parseTerritoryParams({ month: '2026-10-15' })).toEqual({ month: null });
     expect(territoryPath()).toBe('/territory');

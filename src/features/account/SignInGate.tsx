@@ -11,14 +11,14 @@ import { EmptyState } from '@/ui';
 export const GATE_COPY = {
   unavailableTitle: 'Accounts aren’t set up in this build',
   unavailableWeb: 'Available in the iPhone app',
-  unavailableMessage: 'Recording and bike parking still work without an account.',
+  unavailableMessage: 'Recording, bike parking and territory still work without an account.',
   signedOutTitle: 'Sign in to see this',
-  signedOutMessage: 'Leaderboards, friends and territory need a Teal account. Recording works without one.',
+  signedOutMessage: 'Leaderboards and friends need a Teal account. Recording and territory work without one.',
   signIn: 'Sign in',
 } as const;
 
 /**
- * Wraps leaderboard, social and territory pages (spec §3.2): shows why the page is unavailable,
+ * Wraps leaderboard and social pages (spec §3.2): shows why the page is unavailable,
  * offers sign-in (returning here afterwards), sends a new account to the nickname screen, and renders
  * `children` once signed in. `children` may be a function of the signed-in profile.
  */

@@ -3,12 +3,14 @@
  * (debounced, cached), merges them into run-length rectangles per owner, and draws at most 600
  * polygons in the owner's color at 35 % fill. Zoomed out (latitudeDelta > 0.08) it draws 4×4
  * super-cells colored by the majority owner. The signed-in user's cells (or `highlightUserId`'s)
- * get an outline. Only grid squares are drawn, never a loop (Addendum D).
+ * get an outline. Signed out, it draws the squares claimed by the runs on this phone instead.
+ * Only grid squares are drawn, never a loop (Addendum D).
  */
 import { memo, useEffect, useMemo } from 'react';
 import { Polygon } from 'react-native-maps';
 
 import { useAuth } from '@/backend/auth';
+import { LOCAL_OWNER_ID, useLocalTerritory } from '@/territory/local';
 import { layoutTerritory, rectKey, rectPolygon, SUPER_CELL_DELTA, type OwnerRect } from '@/territory/merge';
 import { setTerritoryShown, useTerritory } from '@/territory/useTerritory';
 import { usePalette } from '@/theme';
@@ -23,8 +25,10 @@ export function TerritoryLayer({ month, region, highlightUserId }: TerritoryLaye
   const c = usePalette();
   const auth = useAuth();
   const signedIn = auth.status === 'signedIn';
-  const outlinedOwner = highlightUserId ?? (signedIn ? auth.userId : null);
-  const view = useTerritory(month, region, { enabled: signedIn });
+  const outlinedOwner = highlightUserId ?? (signedIn ? auth.userId : LOCAL_OWNER_ID);
+  const server = useTerritory(month, region, { enabled: signedIn });
+  const local = useLocalTerritory(month, !signedIn);
+  const view = signedIn ? server : { status: local.loading ? ('loading' as const) : ('ready' as const), cells: local.cells, truncated: false, error: null };
   const zoomedOut = (region?.latitudeDelta ?? 0) > SUPER_CELL_DELTA;
 
   const layout = useMemo(() => layoutTerritory(view.cells, { latitudeDelta: zoomedOut ? Infinity : 0 }), [view.cells, zoomedOut]);

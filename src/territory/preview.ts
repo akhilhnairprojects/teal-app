@@ -206,11 +206,17 @@ export function previewClaim(points: readonly TrackPoint[], o: { optedIn?: boole
   return { status: 'claims', cells: cellIds.length, cellIds, areaM2 };
 }
 
-/** One line for the recorder summary or activity detail, or null when there is nothing to say. */
-export function previewClaimText(p: ClaimPreview): string | null {
+/**
+ * One line for the recorder summary or activity detail, or null when there is nothing to say.
+ * `local`: the run stays on this phone (signed out), so the count is final rather than an estimate.
+ */
+export function previewClaimText(p: ClaimPreview, o: { local?: boolean } = {}): string | null {
   switch (p.status) {
-    case 'claims':
-      return p.cells > 0 ? `About ${p.cells} territory ${p.cells === 1 ? 'square' : 'squares'} · ${PREVIEW_LABEL.toLowerCase()}` : null;
+    case 'claims': {
+      if (p.cells <= 0) return null;
+      const squares = `${p.cells} territory ${p.cells === 1 ? 'square' : 'squares'}`;
+      return o.local ? `Claimed ${squares}` : `About ${squares} · ${PREVIEW_LABEL.toLowerCase()}`;
+    }
     case 'nearStartOnly':
       return 'No territory: squares within 300 m of your start and finish are never claimed.';
     case 'tooSmall':

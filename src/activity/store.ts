@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 
 import type { BackendErrorCode, Result } from '@/backend/errors';
 import { fail, ok } from '@/backend/errors';
-import { bool, int, isObj, listOf, num, nullable, oneOf, str, strings, timestamp, uuid, isoDay } from '@/backend/parse';
+import { bool, int, isObj, listOf, num, oneOf, str, strings, timestamp, uuid, isoDay } from '@/backend/parse';
 import { rpc } from '@/backend/rpc';
 import { readCache, writeCache } from '@/lib/cache';
 import { decodePolyline } from '@/lib/polyline';
@@ -35,7 +35,6 @@ export type ServerActivity = {
   isLoop: boolean;
   leaderboardEligible: boolean;
   shareRoute: boolean;
-  groupSessionId: string | null;
   efforts: Effort[];
 };
 
@@ -45,7 +44,6 @@ export type LocalActivity = {
   startedAt: number;
   endedAt: number;
   ownerUserId: string | null;
-  groupSessionId: string | null;
   shareRoute: boolean;
   metrics: TrackMetrics;
   previewPolyline: string;
@@ -104,18 +102,17 @@ export function parseServerActivity(v: unknown): ServerActivity | null {
   const isLoop = bool(v.is_loop);
   const leaderboardEligible = bool(v.leaderboard_eligible);
   const shareRoute = bool(v.share_route);
-  const groupSessionId = nullable(v.group_session_id, uuid);
   const efforts = listOf(v.efforts, parseEffort);
   if (
     !id || !clientId || !kind || !status || !flags || !startedAt || !endedAt || !weekStart || !monthStart ||
     distanceM === null || excludedM === null || elapsedMs === null || movingMs === null ||
-    isLoop === null || leaderboardEligible === null || shareRoute === null || groupSessionId === undefined || !efforts
+    isLoop === null || leaderboardEligible === null || shareRoute === null || !efforts
   ) {
     return null;
   }
   return {
     id, clientId, kind, status, flags, startedAt, endedAt, weekStart, monthStart, distanceM, excludedM, elapsedMs, movingMs,
-    isLoop, leaderboardEligible, shareRoute, groupSessionId, efforts,
+    isLoop, leaderboardEligible, shareRoute, efforts,
   };
 }
 

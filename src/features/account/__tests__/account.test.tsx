@@ -269,7 +269,7 @@ describe('MoveHome and active modes', () => {
         'Record a Bluebike ride',
         'Find a dock',
         'Leaderboards',
-        'Friends & groups',
+        'Friends',
         'Territory',
         'My activities',
         'Inbox',

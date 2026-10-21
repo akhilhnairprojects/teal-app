@@ -2,20 +2,21 @@
  * Territory page (spec G4): draws the month's territory on the map (through the overlay; the layer
  * fetches its own cells), and lists this month's standings, my square count, the reset date, last
  * month's champions, a legend and how to claim. Territory is on by default; when the user has opted
- * out, a card explains what turning it on shows (Addendum D).
+ * out, a card explains what turning it on shows (Addendum D). No account is needed: signed out, the
+ * page shows the squares claimed by the runs on this phone.
  */
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { periodLabel, periodStart, shiftPeriod } from '@/activity/periods';
-import { updateMySettings, type MyProfile } from '@/backend/auth';
+import { updateMySettings, useAuth, type MyProfile } from '@/backend/auth';
 import { Body, Button, Card, ErrorText, SectionTitle, formStyles } from '@/features/account/formUi';
-import { SignInGate } from '@/features/account/SignInGate';
 import { accountPath, goBack } from '@/features/shell/routes';
 import { useNow } from '@/mbta/live/usePolling';
 import { useMapOverlay, type MapOverlay } from '@/state/mapOverlay';
 import { fetchTerritoryChampions, fetchTerritoryStandings, type TerritoryStanding } from '@/territory/api';
+import { LOCAL_OWNER_COLOR, LOCAL_OWNER_ID, useLocalTerritory } from '@/territory/local';
 import { useTerritoryShown } from '@/territory/useTerritory';
 import { fonts, radius, usePalette } from '@/theme';
 import { SheetPage, SheetScrollView } from '@/ui';
@@ -39,6 +40,10 @@ export const TERRITORY_COPY = {
   noStandings: 'No territory claimed yet this month. Run a loop to be the first.',
   standingsError: 'Couldn’t load standings.',
   you: 'you',
+  localNote: 'Worked out on this phone from the loops you run. Nothing is uploaded or shown to anyone else.',
+  localLegend: 'Each square is about 50 m across. Your squares are filled and outlined.',
+  monthly: 'Everyone starts fresh on the 1st of each month (Eastern time). The top 10 are kept as champions.',
+  localMonthly: 'Your territory starts fresh on the 1st of each month (Eastern time).',
 } as const;
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -55,10 +60,63 @@ export const squaresLabel = (n: number): string => `${n.toLocaleString('en-US')}
 const REFRESH_MIN_MS = 60_000;
 
 export function TerritoryScreen({ month }: { month: string | null }) {
+  const auth = useAuth();
   return (
     <SheetPage title={TERRITORY_COPY.title} onBack={goBack}>
-      <SignInGate>{(profile) => <TerritoryBody profile={profile} monthParam={month} />}</SignInGate>
+      {auth.status === 'signedIn' ? <TerritoryBody profile={auth.profile} monthParam={month} /> : <LocalTerritoryBody monthParam={month} />}
     </SheetPage>
+  );
+}
+
+/** The month shown: the link's, or the current ET month (a rollover while open moves to the new one). */
+function useShownMonth(monthParam: string | null) {
+  const now = useNow(60_000);
+  const currentMonth = periodStart('month', now);
+  const month = monthParam ?? currentMonth;
+  return { month, currentMonth, isCurrent: month === currentMonth };
+}
+
+/** Signed out: this phone's own squares, no standings. */
+function LocalTerritoryBody({ monthParam }: { monthParam: string | null }) {
+  const c = usePalette();
+  const { month, isCurrent } = useShownMonth(monthParam);
+  const overlay = useMemo<MapOverlay>(() => ({ territory: { month, highlightUserId: null } }), [month]);
+  useMapOverlay('territory', overlay);
+  const local = useLocalTerritory(month, true);
+  const color = ownerColor(LOCAL_OWNER_COLOR, LOCAL_OWNER_ID);
+
+  return (
+    <SheetScrollView contentContainerStyle={formStyles.content}>
+      <Card testID="territory-summary">
+        <View style={styles.summaryRow}>
+          <Text style={[styles.month, { color: c.text }]}>{periodLabel('month', month)}</Text>
+          {isCurrent ? <Text style={[styles.reset, { color: c.textMuted }]}>{resetLabel(month)}</Text> : null}
+        </View>
+        <View style={styles.summaryRow}>
+          <View style={[styles.dot, { backgroundColor: color }]} />
+          <Text style={[styles.mine, { color: c.text }]} testID="territory-mine">
+            {isCurrent ? 'You hold ' : 'You held '}
+            {squaresLabel(local.cells.length)}
+          </Text>
+          {local.loading ? <ActivityIndicator color={c.brand} /> : null}
+        </View>
+        <Body muted>{TERRITORY_COPY.localNote}</Body>
+      </Card>
+
+      <SectionTitle>Legend</SectionTitle>
+      <Card testID="territory-legend">
+        <View style={styles.legendRow}>
+          <View style={[styles.swatch, { backgroundColor: withAlpha(color, TERRITORY_FILL_ALPHA), borderColor: c.text, borderWidth: 1.5 }]} />
+        </View>
+        <Body muted>{TERRITORY_COPY.localLegend}</Body>
+      </Card>
+
+      <SectionTitle>How it works</SectionTitle>
+      <Card>
+        <Body>{TERRITORY_COPY.howTo}</Body>
+        <Body muted>{TERRITORY_COPY.localMonthly}</Body>
+      </Card>
+    </SheetScrollView>
   );
 }
 
@@ -66,11 +124,7 @@ type Load<T> = { status: 'loading' | 'ready' | 'error'; data: T | null };
 
 function TerritoryBody({ profile, monthParam }: { profile: MyProfile; monthParam: string | null }) {
   const c = usePalette();
-  // The current ET month; a rollover while the page is open switches the map and lists to the new month.
-  const now = useNow(60_000);
-  const currentMonth = periodStart('month', now);
-  const month = monthParam ?? currentMonth;
-  const isCurrent = month === currentMonth;
+  const { month, currentMonth, isCurrent } = useShownMonth(monthParam);
   const lastMonth = shiftPeriod('month', currentMonth, -1);
 
   const overlay = useMemo<MapOverlay>(() => ({ territory: { month, highlightUserId: null } }), [month]);
@@ -196,7 +250,7 @@ function TerritoryBody({ profile, monthParam }: { profile: MyProfile; monthParam
       <SectionTitle>How it works</SectionTitle>
       <Card>
         <Body>{TERRITORY_COPY.howTo}</Body>
-        <Body muted>Everyone starts fresh on the 1st of each month (Eastern time). The top 10 are kept as champions.</Body>
+        <Body muted>{TERRITORY_COPY.monthly}</Body>
         <Button testID="territory-account" kind="secondary" label={TERRITORY_COPY.openAccount} onPress={() => router.push(accountPath())} />
       </Card>
     </SheetScrollView>

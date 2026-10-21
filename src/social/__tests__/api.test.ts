@@ -10,10 +10,8 @@ import {
 } from '@/territory/api';
 
 import { friendInviteLink, listFriends, rotateInviteCode, sendFriendRequest } from '../friends';
-import { createGroup, joinGroup, listMyGroups } from '../groups';
 import { fetchInbox, markInboxRead, subscribeInboxInserts } from '../inbox';
 import { fetchLeaderboard } from '../leaderboards';
-import { createSession, openSessionChannel, setSessionStatus, type LiveProgress } from '../sessions';
 
 jest.mock('@/backend/client', () => jest.requireActual('@/backend/testing/mockSupabase').mockClientModule());
 jest.mock('expo-linking', () => ({ createURL: (p: string) => `teal://${p}` }));
@@ -45,27 +43,22 @@ beforeEach(() => {
 describe('leaderboards', () => {
   it('asks for a scoped board and separates my appended row', async () => {
     mockSupabase.onRpc('get_leaderboard', () => ({ data: [row(1, YOU, false), row(2, YOU, false), row(57, ME, true)] }));
-    const r = await fetchLeaderboard({ board: 'run_5k', period: 'week', periodStart: '2026-10-19', scope: { kind: 'group', groupId: GROUP }, limit: 2 });
+    const r = await fetchLeaderboard({ board: 'run_5k', period: 'week', periodStart: '2026-10-19', scope: { kind: 'friends' }, limit: 2 });
     expect(mockSupabase.raw.rpc).toHaveBeenCalledWith('get_leaderboard', {
       p_board: 'run_5k',
       p_period: 'week',
       p_period_start: '2026-10-19',
-      p_scope: 'group',
-      p_group_id: GROUP,
+      p_scope: 'friends',
+      p_group_id: null,
       p_limit: 2,
     });
     expect(r.ok && r.value.rows.map((x) => x.rank)).toEqual([1, 2]);
     expect(r.ok && r.value.me?.rank).toBe(57);
   });
 
-  it('maps not_member', async () => {
-    mockSupabase.rpcError('get_leaderboard', 'not_member');
-    const r = await fetchLeaderboard({ board: 'run_distance', period: 'month', scope: { kind: 'group', groupId: GROUP } });
-    expect(!r.ok && r.error.code).toBe('not_member');
-  });
 });
 
-describe('friends and groups', () => {
+describe('friends', () => {
   it('sends requests by code or nickname', async () => {
     mockSupabase.onRpc('send_friend_request', (a) => ({ data: a.p_code ? 'accepted' : 'requested' }));
     expect(await sendFriendRequest({ code: ' abcdefgh ' })).toEqual({ ok: true, value: 'accepted' });
@@ -89,62 +82,6 @@ describe('friends and groups', () => {
     expect(friendInviteLink('K7M2P9QX')).toBe('teal://friend/K7M2P9QX');
   });
 
-  it('creates and joins groups by id', async () => {
-    mockSupabase.onRpc('create_group', () => ({ data: GROUP }));
-    expect(await createGroup('  Sunday Club ')).toEqual({ ok: true, value: GROUP });
-    expect(mockSupabase.raw.rpc).toHaveBeenLastCalledWith('create_group', { p_name: 'Sunday Club' });
-    mockSupabase.rpcError('join_group', 'limit_reached');
-    const j = await joinGroup('abcdefgh');
-    expect(!j.ok && j.error.code).toBe('limit_reached');
-    // An unknown code is a null value (the miss is rate limited server-side), shown as not_found.
-    mockSupabase.onRpc('join_group', () => ({ data: null }));
-    const miss = await joinGroup('zzzzzzzz');
-    expect(!miss.ok && miss.error.code).toBe('not_found');
-    mockSupabase.onRpc('join_group', () => ({ data: GROUP }));
-    expect(await joinGroup('abcdefgh')).toEqual({ ok: true, value: GROUP });
-    mockSupabase.onRpc('list_my_groups', () => ({ data: [{ id: GROUP, name: 'Club', role: 'owner', member_count: 1, invite_code: 'ABCDEFGH', created_at: TS }] }));
-    expect((await listMyGroups()).ok).toBe(true);
-  });
-});
-
-describe('sessions', () => {
-  it('creates and starts sessions', async () => {
-    mockSupabase.onRpc('create_group_session', () => ({ data: GROUP }));
-    await createSession(GROUP, { title: ' Long run ', kind: 'run' });
-    expect(mockSupabase.raw.rpc).toHaveBeenLastCalledWith('create_group_session', { p_group: GROUP, p_title: 'Long run', p_kind: 'run', p_starts_at: null });
-    mockSupabase.onRpc('set_group_session_status', () => ({ data: null }));
-    expect(await setSessionStatus(GROUP, 'live')).toEqual({ ok: true, value: undefined });
-  });
-
-  it('opens a private channel and never sends coordinates', async () => {
-    const progress: LiveProgress[] = [];
-    const presence: string[][] = [];
-    const ch = openSessionChannel(GROUP, { onProgress: (p) => progress.push(p), onPresence: (u) => presence.push(u), onStatus: jest.fn() });
-    const raw = mockSupabase.channels[0];
-    expect(raw.topic).toBe(`session:${GROUP}`);
-    expect(raw.opts).toMatchObject({ config: { private: true } });
-    expect(raw.tracked).toEqual([{ userId: ME }]);
-
-    ch.sendProgress({ distanceM: 1200, elapsedMs: 300_000, state: 'recording', lat: 42.3 } as never);
-    const sent = raw.sent[0] as { payload: Record<string, unknown> };
-    expect(Object.keys(sent.payload).sort()).toEqual(['at', 'distanceM', 'elapsedMs', 'state', 'userId']);
-
-    raw.emit('broadcast', 'progress', { payload: { userId: YOU, distanceM: 900, elapsedMs: 250_000, state: 'paused', at: 5 } });
-    raw.emit('broadcast', 'progress', { payload: { userId: 'bad' } });
-    expect(progress).toEqual([{ userId: YOU, distanceM: 900, elapsedMs: 250_000, state: 'paused', at: 5 }]);
-    raw.presence = { a: [{ userId: YOU }], b: [{ userId: ME }] };
-    raw.emit('presence', 'sync', {});
-    expect(presence).toEqual([[ME, YOU].sort()]);
-    await ch.close();
-    expect(raw.removed).toBe(true);
-  });
-
-  it('is a no-op when signed out', () => {
-    mockAuth.current = { status: 'signedOut' };
-    const ch = openSessionChannel(GROUP, { onProgress: jest.fn(), onPresence: jest.fn(), onStatus: jest.fn() });
-    ch.sendProgress({ distanceM: 1, elapsedMs: 1, state: 'recording' });
-    expect(mockSupabase.channels).toHaveLength(0);
-  });
 });
 
 describe('inbox', () => {

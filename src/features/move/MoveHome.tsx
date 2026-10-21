@@ -29,7 +29,7 @@ export const MOVE_ROWS: readonly MoveRow[] = [
   { key: 'record-bike', label: 'Record a Bluebike ride', icon: 'bicycle', href: recordPath({ kind: 'bike' }) },
   { key: 'park', label: 'Find a dock', icon: 'locate', href: parkPath() },
   { key: 'leaderboards', label: 'Leaderboards', icon: 'trophy', href: leaderboardsPath() },
-  { key: 'friends', label: 'Friends & groups', icon: 'people', href: friendsPath() },
+  { key: 'friends', label: 'Friends', icon: 'people', href: friendsPath() },
   { key: 'territory', label: 'Territory', icon: 'grid', href: territoryPath() },
   { key: 'activities', label: 'My activities', icon: 'list', href: activitiesPath() },
   { key: 'inbox', label: 'Inbox', icon: 'mail', href: inboxPath() },
@@ -150,7 +150,7 @@ function MoveHomeNative() {
           </Pressable>
         ))}
       </View>
-      <Text style={s.footnote}>Recording and bike parking work without an account.</Text>
+      <Text style={s.footnote}>Recording, bike parking and territory work without an account.</Text>
     </SheetScrollView>
   );
 }

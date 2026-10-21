@@ -3,10 +3,8 @@ import { parseServerActivity } from '@/activity/store';
 import { parseMyProfile } from '@/backend/auth';
 import { listOf, nullable, numeric, uuid } from '@/backend/parse';
 import { parseFriend, parseInviteInput } from '@/social/friends';
-import { parseGroup, parseGroupMember } from '@/social/groups';
 import { parseInboxItem } from '@/social/inbox';
 import { parseChampion, parseFeaturedRun, parseLeaderboardRow } from '@/social/leaderboards';
-import { parseGroupSession, parseLiveProgress, parseSessionResult, presenceUserIds } from '@/social/sessions';
 import { parseTerritoryCell, parseTerritoryStanding } from '@/territory/api';
 
 jest.mock('@/backend/client', () => jest.requireActual('@/backend/testing/mockSupabase').mockClientModule());
@@ -46,42 +44,9 @@ describe('API parsers drop malformed rows', () => {
     expect(listOf([champ, { ...champ, board: 'walk' }], parseChampion)).toHaveLength(1);
   });
 
-  it('friends, groups, members', () => {
+  it('friends', () => {
     const f = { user_id: U1, nickname: 'ana', color: 2, status: 'friends', since: TS, week_run_m: 4200 };
     expect(listOf([f, { ...f, status: 'enemies' }, { ...f, week_run_m: 'far' }, { ...f, week_run_m: null }], parseFriend)).toHaveLength(2);
-    const g = { id: U1, name: 'Club', role: 'owner', member_count: 3, invite_code: 'ABCDEFGH', created_at: TS };
-    expect(listOf([g, { ...g, member_count: null }], parseGroup)).toHaveLength(1);
-    const m = { user_id: U2, nickname: 'bo', color: 0, role: 'member', joined_at: TS };
-    expect(listOf([m, { ...m, role: 'admin' }], parseGroupMember)).toHaveLength(1);
-  });
-
-  it('sessions, results, live progress', () => {
-    const s = {
-      id: U1,
-      group_id: U2,
-      title: 'Sunday long run',
-      kind: 'run',
-      status: 'live',
-      created_by: null,
-      starts_at: null,
-      started_at: TS,
-      ended_at: null,
-      created_at: TS,
-      participants: [{ user_id: U1, nickname: 'ana', color: 1, joined_at: TS }, { user_id: 'x' }],
-    };
-    expect(parseGroupSession(s)?.participants).toHaveLength(1);
-    expect(parseGroupSession({ ...s, status: 'paused' })).toBeNull();
-    const r = { user_id: U1, nickname: 'ana', color: 1, activity_status: null, distance_m: null, moving_ms: null, elapsed_ms: null, best_1k_ms: null, best_5k_ms: null };
-    expect(listOf([r, { ...r, distance_m: 'x' }], parseSessionResult)).toHaveLength(1);
-    // Extra fields such as coordinates are dropped from progress payloads.
-    expect(parseLiveProgress({ userId: U1, distanceM: 1200, elapsedMs: 300_000, state: 'recording', at: 1, lat: 42.3, lon: -71 })).toEqual({
-      userId: U1,
-      distanceM: 1200,
-      elapsedMs: 300_000,
-      state: 'recording',
-      at: 1,
-    });
-    expect(presenceUserIds({ a: [{ userId: U2 }, { userId: 'bad' }], b: [{ userId: U1 }] })).toEqual([U1, U2]);
   });
 
   it('inbox items and territory rows', () => {

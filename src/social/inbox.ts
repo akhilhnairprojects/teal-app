@@ -10,14 +10,15 @@ import { rpc } from '@/backend/rpc';
 
 export type InboxItem = {
   id: string;
-  kind: 'overtake' | 'session_live' | 'friend_request' | 'friend_accepted';
+  kind: 'overtake' | 'friend_request' | 'friend_accepted';
   createdAt: string;
   readAt: string | null;
   actorNickname: string | null;
   payload: Record<string, unknown>;
 };
 
-const kindOf = oneOf<InboxItem['kind']>(['overtake', 'session_live', 'friend_request', 'friend_accepted']);
+// The server also has 'session_live' (group runs); the app doesn't offer groups, so those rows are skipped.
+const kindOf = oneOf<InboxItem['kind']>(['overtake', 'friend_request', 'friend_accepted']);
 
 export function parseInboxItem(v: unknown): InboxItem | null {
   if (!isObj(v)) return null;

@@ -39,7 +39,6 @@ function local(o: Partial<LocalActivity> = {}): LocalActivity {
     startedAt: STARTED,
     endedAt: STARTED + 300_000,
     ownerUserId: ME,
-    groupSessionId: null,
     shareRoute: false,
     metrics: computeTrackMetrics(POINTS, 'run'),
     previewPolyline: '',
@@ -66,7 +65,6 @@ const summary = (clientId = LOCAL_ID) => ({
   is_loop: false,
   leaderboard_eligible: true,
   share_route: false,
-  group_session_id: null,
   efforts: [{ distance_m: 1000, duration_ms: 250_100, start_offset_ms: 0 }],
 });
 
@@ -93,7 +91,6 @@ describe('sync', () => {
       started_at: '2026-10-20T13:00:00.000Z',
       ended_at: '2026-10-20T13:05:00.000Z',
       share_route: false,
-      group_session_id: null,
     });
     expect((sent!.points as number[][])[0]).toEqual([0, POINTS[0].lat, POINTS[0].lon]);
     const a = (await getLocalActivity(LOCAL_ID))!;

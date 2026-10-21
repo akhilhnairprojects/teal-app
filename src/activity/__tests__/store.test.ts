@@ -37,7 +37,6 @@ const local = (localId: string, startedAt: number, o: Partial<LocalActivity> = {
   startedAt,
   endedAt: startedAt + 99_000,
   ownerUserId: null,
-  groupSessionId: null,
   shareRoute: false,
   metrics: computeTrackMetrics(POINTS, 'run'),
   previewPolyline: '',
@@ -62,7 +61,6 @@ const server = (o: Partial<ServerActivity> = {}): ServerActivity => ({
   isLoop: false,
   leaderboardEligible: true,
   shareRoute: true,
-  groupSessionId: null,
   efforts: [],
   ...o,
 });
@@ -84,7 +82,6 @@ const wire = (s: ServerActivity) => ({
   is_loop: s.isLoop,
   leaderboard_eligible: s.leaderboardEligible,
   share_route: s.shareRoute,
-  group_session_id: s.groupSessionId,
   efforts: [],
 });
 

@@ -122,7 +122,7 @@ export function configureNotifications(): void {
   }
 }
 
-/** Ask for permission in context (a notify toggle, parking, joining a session). */
+/** Ask for permission in context (a notify toggle, parking). */
 export async function ensureNotificationPermission(): Promise<'granted' | 'denied'> {
   if (Platform.OS === 'web') return 'denied';
   try {
@@ -225,17 +225,13 @@ export async function unregisterPush(): Promise<void> {
 // --- tap routing -------------------------------------------------------------------------
 
 /** Route prefixes a notification may open (spec §3.5); anything else is ignored. */
-export const NOTIFICATION_ROUTE_PREFIXES = ['/friends', '/inbox', '/session/', '/leaderboards', '/park', '/territory'] as const;
+export const NOTIFICATION_ROUTE_PREFIXES = ['/friends', '/inbox', '/leaderboards', '/park', '/territory'] as const;
 
 /** The href for a notification's `data.url`, or null when it is not a known Teal route. */
 export function notificationHref(url: unknown): Href | null {
   if (typeof url !== 'string' || !url.startsWith('/') || url.startsWith('//') || /\s/.test(url)) return null;
   for (const prefix of NOTIFICATION_ROUTE_PREFIXES) {
-    if (prefix.endsWith('/')) {
-      if (url.startsWith(prefix) && url.length > prefix.length) return url as Href;
-    } else if (url === prefix || url.startsWith(`${prefix}?`) || url.startsWith(`${prefix}/`)) {
-      return url as Href;
-    }
+    if (url === prefix || url.startsWith(`${prefix}?`) || url.startsWith(`${prefix}/`)) return url as Href;
   }
   return null;
 }
