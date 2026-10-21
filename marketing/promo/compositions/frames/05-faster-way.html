@@ -1,0 +1,125 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Manrope", sans-serif;
+      color: #0b1f1e;
+      perspective: 1600px;
+    }
+    #f05-ground {
+      position: absolute;
+      inset: 0;
+      background: #eef7f6;
+    }
+    #f05-head {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 96px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 72px;
+      letter-spacing: -0.03em;
+    }
+    #f05-head em {
+      font-style: normal;
+      color: #0d9488;
+    }
+    .f05-tile {
+      position: absolute;
+      top: 260px;
+      width: 430px;
+      height: 600px;
+      border-radius: 30px;
+      background: #ffffff;
+      border: 2px solid rgba(13, 148, 136, 0.2);
+      box-shadow: 0 24px 60px rgba(11, 79, 74, 0.12);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    #f05-tile-t {
+      left: 70px;
+    }
+    #f05-tile-bike {
+      right: 70px;
+    }
+    .f05-label {
+      padding: 26px 30px 6px;
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: 0.16em;
+      color: #0d9488;
+    }
+    #f05-t-img {
+      flex: 1;
+      margin: 8px 18px 0;
+      background: url("assets/card-t-park-street-light.png") top center / 100% auto no-repeat;
+    }
+    #f05-bike-img {
+      margin: auto 18px;
+      height: 186px;
+      background: url("assets/card-bike-light.png") center / 100% auto no-repeat;
+    }
+    #f05-or {
+      position: absolute;
+      left: 540px;
+      top: 560px;
+      z-index: 2;
+      padding: 14px 26px;
+      border-radius: 999px;
+      background: #0d9488;
+      color: #fff;
+      font-weight: 800;
+      font-size: 34px;
+      box-shadow: 0 10px 30px rgba(13, 148, 136, 0.35);
+    }
+    #f05-check {
+      position: absolute;
+      right: 90px;
+      top: 232px;
+      z-index: 2;
+      padding: 12px 22px;
+      border-radius: 999px;
+      background: #0b4f4a;
+      color: #ccf1ec;
+      font-weight: 800;
+      font-size: 26px;
+    }
+  </style>
+  <div data-hf-id="hf-xkxa" id="root" data-composition-id="05-faster-way" data-width="1080" data-height="1080" data-duration="3.77">
+    <div data-hf-id="hf-5mb4" id="f05-ground" class="clip" data-start="0" data-duration="3.77" data-track-index="0"></div>
+    <div data-hf-id="hf-sowl" id="f05-head" class="clip" data-start="0" data-duration="3.77" data-track-index="1">Take the <em data-hf-id="hf-bm1m">faster</em> way.</div>
+    <div data-hf-id="hf-hw4o" id="f05-tile-t" class="f05-tile clip" data-start="0" data-duration="3.77" data-track-index="2">
+      <div data-hf-id="hf-iwyh" class="f05-label">THE T</div>
+      <div data-hf-id="hf-ddo5" id="f05-t-img"></div>
+    </div>
+    <div data-hf-id="hf-a2k0" id="f05-tile-bike" class="f05-tile clip" data-start="0" data-duration="3.77" data-track-index="3">
+      <div data-hf-id="hf-olpc" class="f05-label">BLUEBIKES</div>
+      <div data-hf-id="hf-6fds" id="f05-bike-img"></div>
+    </div>
+    <div data-hf-id="hf-8rlf" id="f05-or" class="clip" data-start="0" data-duration="3.77" data-track-index="4">or</div>
+    <div data-hf-id="hf-unsn" id="f05-check" class="clip" data-start="0" data-duration="3.77" data-track-index="5">✓ Faster today</div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const ease = "power3.out";
+      // Scene 1 — headline slides down on "So you take".
+      tl.fromTo("#f05-head", { opacity: 0, y: -40 }, { opacity: 1, y: 0, duration: 0.6, ease }, 0.2);
+      // Scene 2 — split-tilt entry: tiles from opposite wings, mirrored book-open tilt, settling flat.
+      tl.fromTo("#f05-tile-t", { opacity: 0, x: -220, rotationY: 24, scale: 0.85 }, { opacity: 1, x: 0, rotationY: 0, scale: 1, duration: 0.8, ease }, 0.85);
+      tl.fromTo("#f05-tile-bike", { opacity: 0, x: 220, rotationY: -24, scale: 0.85 }, { opacity: 1, x: 0, rotationY: 0, scale: 1, duration: 0.8, ease }, 1.05);
+      tl.fromTo("#f05-or", { opacity: 0, xPercent: -50, yPercent: -50, scale: 0.6 }, { opacity: 1, xPercent: -50, yPercent: -50, scale: 1, duration: 0.45, ease }, 1.45);
+      // Scene 3 — "Every time.": the badge spring-pops (the frame's one overshoot).
+      tl.fromTo("#f05-check", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)" }, 2.43);
+      // Scene 4 — hold.
+      window.__timelines["05-faster-way"] = tl;
+    })();
+  </script>
+</template>

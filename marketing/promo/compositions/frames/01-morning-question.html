@@ -1,0 +1,112 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Manrope", sans-serif;
+      color: #e6f4f2;
+    }
+    #f01-ground {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(120% 90% at 50% 110%, #0d2a26 0%, #061412 60%);
+    }
+    #f01-stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+    }
+    #f01-eyebrow {
+      display: flex;
+      gap: 0.35em;
+      font-weight: 700;
+      font-size: 30px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #5eead4;
+    }
+    #f01-line {
+      font-weight: 800;
+      font-size: 150px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      text-align: center;
+    }
+    #f01-train {
+      display: block;
+      color: #e6f4f2;
+    }
+    #f01-row2 {
+      display: block;
+      white-space: nowrap;
+    }
+    #f01-or {
+      color: #8fb3ad;
+      font-weight: 600;
+    }
+    .f01-token {
+      display: none;
+    }
+    #f01-dots {
+      display: flex;
+      gap: 22px;
+    }
+    #f01-dots span {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+    }
+  </style>
+  <div data-hf-id="hf-64xz" id="root" data-composition-id="01-morning-question" data-width="1080" data-height="1080" data-duration="5.416">
+    <div data-hf-id="hf-hzun" id="f01-ground" class="clip" data-start="0" data-duration="5.416" data-track-index="0"></div>
+    <div data-hf-id="hf-o1h7" id="f01-stage" class="clip" data-start="0" data-duration="5.416" data-track-index="1">
+      <div data-hf-id="hf-vcyu" id="f01-eyebrow"><span data-hf-id="hf-703k">Boston</span><span data-hf-id="hf-1bmq">·</span><span data-hf-id="hf-us0h">8:02</span><span data-hf-id="hf-rv5d">a.m.</span></div>
+      <div data-hf-id="hf-cq87" id="f01-line">
+        <span data-hf-id="hf-5qke" id="f01-train">Train</span>
+        <span data-hf-id="hf-n1h4" id="f01-row2"><span data-hf-id="hf-jicw" id="f01-or">or </span><span data-hf-id="hf-4skb" id="f01-tok-red" class="f01-token" style="color: #ff5a4a">Red?</span><span data-hf-id="hf-5gpx" id="f01-tok-orange" class="f01-token" style="color: #ed8b00">Orange?</span><span data-hf-id="hf-n0au" id="f01-tok-green" class="f01-token" style="color: #1fae5b">Green?</span><span data-hf-id="hf-bvbm" id="f01-tok-bike" class="f01-token" style="color: #5eead4">bike?</span></span>
+      </div>
+      <div data-hf-id="hf-5rhl" id="f01-dots">
+        <span data-hf-id="hf-k7uz" style="background: #da291c"></span>
+        <span data-hf-id="hf-nfo4" style="background: #ed8b00"></span>
+        <span data-hf-id="hf-ae2g" style="background: #00843d"></span>
+        <span data-hf-id="hf-hoaa" style="background: #003da5"></span>
+        <span data-hf-id="hf-o7ld" style="background: #5eead4"></span>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const ease = "power3.out";
+      // Scene 1 — eyebrow, word by word, on "Every Boston morning".
+      tl.fromTo("#f01-eyebrow span", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.5, ease, stagger: 0.12 }, 0.25);
+      // Scene 2 — "Train" lands on "the same question".
+      tl.fromTo("#f01-train", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.7, ease }, 1.9);
+      tl.fromTo("#f01-or", { opacity: 0 }, { opacity: 1, duration: 0.4, ease }, 2.35);
+      // In-place token cycle (hard cuts): Red? -> Orange? -> Green? -> bike?
+      const swaps = [
+        ["#f01-tok-red", 2.45],
+        ["#f01-tok-orange", 2.95],
+        ["#f01-tok-green", 3.45],
+        ["#f01-tok-bike", 4.39],
+      ];
+      swaps.forEach(([sel, t], i) => {
+        tl.set(".f01-token", { display: "none" }, t);
+        tl.set(sel, { display: "inline" }, t);
+        if (i === swaps.length - 1) tl.fromTo(sel, { scale: 0.92 }, { scale: 1, duration: 0.35, ease }, t);
+      });
+      // Scene 4 — line-color dots expand from center, mint last.
+      tl.fromTo("#f01-dots span", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.35, ease, stagger: { each: 0.06, from: "center" } }, 4.5);
+      window.__timelines["01-morning-question"] = tl;
+    })();
+  </script>
+</template>

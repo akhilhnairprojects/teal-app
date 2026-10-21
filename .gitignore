@@ -30,8 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (API key): every .env variant except the committed example
+.env*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +40,24 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local env (API key); also covered by `.env*` above
+.env
+
+# local artifacts: dev-server QR code (may encode a tunnel URL)
+investigations/expo-go-qr.png
+
+# marketing workspace: generated media, caches and its own dependencies
+marketing/**/node_modules/
+marketing/**/.hyperframes/
+marketing/**/.media/
+marketing/**/.thumbnails/
+marketing/**/.waveform-cache/
+marketing/**/capture/
+marketing/**/capture-failed/
+marketing/**/renders/
+marketing/**/*.mp4
+marketing/**/*.mov
+marketing/**/*.wav
+marketing/**/*.mp3
+marketing/**/*.log

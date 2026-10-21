@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teal promo storyboard</title>
+    <style>
+      :root {
+        --bg: #f4f7f7;
+        --card: #ffffff;
+        --ink: #0b1f1e;
+        --muted: #55706c;
+        --line: #d9e6e4;
+        --accent: #0d9488;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      header {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 40px 24px 8px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      main {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 16px 24px 48px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+      }
+      .act {
+        grid-column: 1 / -1;
+        margin-top: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .frame {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .frame img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        background: #061412;
+      }
+      .title {
+        padding: 14px 16px 2px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .time {
+        padding: 0 16px;
+        font-size: 13px;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .words {
+        margin: 8px 16px 16px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Teal — "Your Boston commute, in teal"</h1>
+      <p>1080×1080 · ~30.5s · music + voiceover. Static sketches of each frame's key moment; motion comes in the build.</p>
+    </header>
+    <main>
+      <section class="act">Act 1: The question</section>
+      <div class="frame">
+        <img src="stills/frame-00-at-2s.png" alt="Frame 01 sketch" />
+        <div class="title">01: The morning question</div>
+        <div class="time">0.0 to 4.0s</div>
+        <p class="words">"Every Boston morning starts with the same question: train — or bike?"</p>
+      </div>
+      <div class="frame">
+        <img src="stills/frame-01-at-6.25s.png" alt="Frame 02 sketch" />
+        <div class="title">02: Meet Teal</div>
+        <div class="time">4.0 to 8.5s</div>
+        <p class="words">"Meet Teal. Your whole commute — live, in one glance."</p>
+      </div>
+      <section class="act">Act 2: The proof</section>
+      <div class="frame">
+        <img src="stills/frame-02-at-12s.png" alt="Frame 03 sketch" />
+        <div class="title">03: The T, counting down</div>
+        <div class="time">8.5 to 15.5s</div>
+        <p class="words">"The next T at every station near you — Red, Orange, Green — counting down live."</p>
+      </div>
+      <div class="frame">
+        <img src="stills/frame-03-at-18.75s.png" alt="Frame 04 sketch" />
+        <div class="title">04: Bluebikes, before you walk</div>
+        <div class="time">15.5 to 22.0s</div>
+        <p class="words">"The closest Bluebikes, too: classic, electric, and open docks — before you walk over."</p>
+      </div>
+      <section class="act">Act 3: The payoff</section>
+      <div class="frame">
+        <img src="stills/frame-04-at-24.25s.png" alt="Frame 05 sketch" />
+        <div class="title">05: Pick the faster way</div>
+        <div class="time">22.0 to 26.5s</div>
+        <p class="words">"So you take the faster way. Every time."</p>
+      </div>
+      <div class="frame">
+        <img src="stills/frame-05-at-28.5s.png" alt="Frame 06 sketch" />
+        <div class="title">06: Your Boston commute, in teal</div>
+        <div class="time">26.5 to 30.5s</div>
+        <p class="words">"Teal. Your Boston commute — in teal."</p>
+      </div>
+    </main>
+  </body>
+</html>

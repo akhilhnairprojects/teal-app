@@ -1,0 +1,130 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Manrope", sans-serif;
+      color: #e6f4f2;
+    }
+    #f03-ground {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(70% 70% at 30% 50%, #0f2e2a 0%, #061412 70%);
+    }
+    #f03-phone {
+      position: absolute;
+      left: 110px;
+      top: 300px;
+      width: 416px;
+      height: 900px;
+      border-radius: 64px;
+      padding: 14px;
+      background: #1b2a28;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #2c4440;
+    }
+    #f03-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 52px;
+      background: url("assets/screen-top-dark.png") top center / cover no-repeat;
+    }
+    #f03-card {
+      position: absolute;
+      left: 420px;
+      top: 400px;
+      width: 470px;
+      height: 772px;
+      border-radius: 26px;
+      background: url("assets/card-t-park-street-dark.png") top center / cover no-repeat;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(94, 234, 212, 0.55);
+    }
+    #f03-copy {
+      position: absolute;
+      left: 110px;
+      top: 72px;
+      width: 880px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    #f03-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: 0.18em;
+      color: #5eead4;
+    }
+    #f03-live {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #5eead4;
+    }
+    #f03-head {
+      font-weight: 800;
+      font-size: 60px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #f03-head span {
+      display: inline-block;
+    }
+    #f03-pills {
+      position: absolute;
+      left: 920px;
+      top: 470px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    #f03-pills span {
+      font-weight: 800;
+      font-size: 24px;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 10px;
+    }
+  </style>
+  <div data-hf-id="hf-ot72" id="root" data-composition-id="03-the-t" data-width="1080" data-height="1080" data-duration="5.751">
+    <div data-hf-id="hf-mlst" id="f03-ground" class="clip" data-start="0" data-duration="5.751" data-track-index="0"></div>
+    <div data-hf-id="hf-ubwg" id="f03-phone" data-layout-allow-overflow class="clip" data-start="0" data-duration="5.751" data-track-index="1"><div data-hf-id="hf-5zyv" id="f03-screen"></div></div>
+    <div data-hf-id="hf-d78t" id="f03-card" data-layout-allow-overflow class="clip" data-start="0" data-duration="5.751" data-track-index="2"></div>
+    <div data-hf-id="hf-m7mc" id="f03-copy" class="clip" data-start="0" data-duration="5.751" data-track-index="3">
+      <div data-hf-id="hf-i06o" id="f03-eyebrow"><span data-hf-id="hf-25oc">THE T</span><span data-hf-id="hf-9cfa" id="f03-live"></span></div>
+      <div data-hf-id="hf-n23x" id="f03-head"><span data-hf-id="hf-46bh" id="f03-h1">Every train near you,</span> <span data-hf-id="hf-ar6x" id="f03-h2">counting down live.</span></div>
+    </div>
+    <div data-hf-id="hf-k2gw" id="f03-pills" class="clip" data-start="0" data-duration="5.751" data-track-index="4">
+      <span data-hf-id="hf-7lyl" id="f03-red" style="background: #da291c">Red</span>
+      <span data-hf-id="hf-chwb" id="f03-orange" style="background: #ed8b00; color: #1b1305">Orange</span>
+      <span data-hf-id="hf-b5mw" id="f03-green" style="background: #00843d">Green</span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const ease = "power3.out";
+      // Scene 1 — phone rises in; eyebrow + first headline phrase on "The next T".
+      tl.fromTo("#f03-phone", { opacity: 0, y: 120 }, { opacity: 1, y: 0, duration: 0.8, ease }, 0);
+      tl.fromTo("#f03-eyebrow", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease }, 0.25);
+      tl.fromTo("#f03-h1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease }, 0.4);
+      // Scene 2 — line pills reveal on their spoken names.
+      [["#f03-red", 2.43], ["#f03-orange", 3.03], ["#f03-green", 3.46]].forEach(([sel, t]) => {
+        tl.fromTo(sel, { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: 0.4, ease }, t);
+      });
+      // Scene 3 — "counting down live": the Park Street card lifts out of the phone; phone recedes.
+      tl.fromTo("#f03-card", { opacity: 0, x: -150, y: 40, scale: 0.86 }, { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.8, ease }, 3.84);
+      tl.to("#f03-phone", { opacity: 0.55, filter: "blur(2px)", duration: 0.8, ease }, 3.84);
+      tl.fromTo("#f03-h2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.6, ease }, 3.9);
+      // Scene 4 — hold; the live dot pulses once on "live." (finite, the app's own signal).
+      tl.fromTo("#f03-live", { scale: 1, boxShadow: "0 0 0 0 rgba(94,234,212,0.7)" }, { scale: 1.25, boxShadow: "0 0 0 14px rgba(94,234,212,0)", duration: 0.6, ease: "power2.out" }, 4.65);
+      tl.to("#f03-live", { scale: 1, duration: 0.3, ease: "power2.out" }, 5.25);
+      window.__timelines["03-the-t"] = tl;
+    })();
+  </script>
+</template>

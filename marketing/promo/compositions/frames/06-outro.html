@@ -1,0 +1,94 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Manrope", sans-serif;
+    }
+    #f06-ground {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(70% 60% at 50% 45%, #0f6b63 0%, #0b4f4a 55%, #073a36 100%);
+    }
+    #f06-stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+    }
+    #f06-mark {
+      font-weight: 800;
+      font-size: 240px;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      color: #e6f4f2;
+    }
+    #f06-dot {
+      display: inline-block;
+      color: #5eead4;
+    }
+    #f06-tag {
+      display: flex;
+      gap: 0.28em;
+      font-weight: 600;
+      font-size: 52px;
+      letter-spacing: -0.02em;
+      color: #ccf1ec;
+    }
+    #f06-tag span {
+      display: inline-block;
+    }
+    #f06-teal {
+      font-weight: 800;
+      color: #5eead4;
+    }
+    #f06-chip {
+      margin-top: 18px;
+      padding: 12px 26px;
+      border-radius: 999px;
+      border: 2px solid rgba(94, 234, 212, 0.6);
+      color: #ccf1ec;
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: 0.08em;
+    }
+  </style>
+  <div data-hf-id="hf-ntyw" id="root" data-composition-id="06-outro" data-width="1080" data-height="1080">
+    <div data-hf-id="hf-favr" id="f06-ground" class="clip" data-start="0" data-duration="3.709" data-track-index="0"></div>
+    <div data-hf-id="hf-lwdv" id="f06-stage" class="clip" data-start="0" data-duration="3.709" data-track-index="1">
+      <div data-hf-id="hf-htwd" id="f06-mark">teal<span data-hf-id="hf-nmla" id="f06-dot">.</span></div>
+      <div data-hf-id="hf-zork" id="f06-tag">
+        <span data-hf-id="hf-ekqw" id="f06-w1">Your</span><span data-hf-id="hf-kvzx" id="f06-w2">Boston</span><span data-hf-id="hf-ahwl" id="f06-w3">commute,</span><span data-hf-id="hf-n17l" id="f06-w4">in</span><span data-hf-id="hf-9nlr" id="f06-teal">teal.</span>
+      </div>
+      <div data-hf-id="hf-gyze" id="f06-chip">FOR IPHONE</div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const ease = "power3.out";
+      // Scene 1 — the anchor: wordmark settles in on "Teal.", dot last.
+      tl.fromTo("#f06-mark", { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.7, ease }, 0.2);
+      tl.fromTo("#f06-dot", { opacity: 0, y: -60 }, { opacity: 1, y: 0, duration: 0.4, ease }, 0.6);
+      // Scene 2 — tagline sits dim, then each word steps bright on its spoken cue.
+      tl.fromTo("#f06-tag span", { opacity: 0 }, { opacity: 0.28, duration: 0.4, ease }, 1.0);
+      [["#f06-w1", 1.36], ["#f06-w2", 1.71], ["#f06-w3", 2.3], ["#f06-w4", 2.77], ["#f06-teal", 2.99]].forEach(([sel, t]) => {
+        tl.to(sel, { opacity: 1, duration: 0.25, ease: "power2.out" }, t);
+      });
+      tl.fromTo("#f06-teal", { scale: 0.9 }, { scale: 1, duration: 0.35, ease }, 2.99);
+      // Scene 3 — the iPhone chip.
+      tl.fromTo("#f06-chip", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease }, 3.05);
+      // Scene 4 — the film's only exit: a soft fade of the lockup over the last beat.
+      tl.to("#f06-stage", { opacity: 0, duration: 0.25, ease: "power2.in" }, 3.45);
+      window.__timelines["06-outro"] = tl;
+    })();
+  </script>
+</template>

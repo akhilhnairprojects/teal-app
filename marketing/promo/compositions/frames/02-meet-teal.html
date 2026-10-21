@@ -1,0 +1,88 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Manrope", sans-serif;
+    }
+    #f02-ground {
+      position: absolute;
+      inset: 0;
+      background: #061412;
+    }
+    #f02-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(60% 50% at 50% 46%, #0f3a35 0%, rgba(6, 20, 18, 0) 70%);
+    }
+    #f02-stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+    #f02-mark {
+      display: flex;
+      font-weight: 800;
+      font-size: 260px;
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      color: #99f6e4;
+    }
+    #f02-mark span {
+      display: inline-block;
+    }
+    #f02-dot {
+      color: #2dd4bf;
+    }
+    #f02-claim {
+      display: flex;
+      gap: 0.3em;
+      font-weight: 600;
+      font-size: 50px;
+      letter-spacing: -0.02em;
+      color: #e6f4f2;
+    }
+    #f02-claim span {
+      display: inline-block;
+    }
+    #f02-live {
+      color: #5eead4;
+    }
+  </style>
+  <div data-hf-id="hf-hw2n" id="root" data-composition-id="02-meet-teal" data-width="1080" data-height="1080" data-duration="5.672">
+    <div data-hf-id="hf-4ua6" id="f02-ground" class="clip" data-start="0" data-duration="5.672" data-track-index="0"></div>
+    <div data-hf-id="hf-b6tp" id="f02-glow" class="clip" data-start="0" data-duration="5.672" data-track-index="1"></div>
+    <div data-hf-id="hf-wbpt" id="f02-stage" class="clip" data-start="0" data-duration="5.672" data-track-index="2">
+      <div data-hf-id="hf-3zhz" id="f02-mark"><span data-hf-id="hf-r5jj">t</span><span data-hf-id="hf-xwr0">e</span><span data-hf-id="hf-zhz4">a</span><span data-hf-id="hf-ubzr">l</span><span data-hf-id="hf-vcj6" id="f02-dot">.</span></div>
+      <div data-hf-id="hf-m8hc" id="f02-claim"><span data-hf-id="hf-uats" id="f02-c1">Your commute,</span><span data-hf-id="hf-qf43" id="f02-live">live.</span></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const ease = "power3.out";
+      // Scene 1 — letters cascade up on "Meet Teal"; the glow brightens underneath.
+      tl.fromTo("#f02-glow", { opacity: 0.5 }, { opacity: 1, duration: 1.4, ease: "power2.out" }, 0);
+      tl.fromTo("#f02-mark span:not(#f02-dot)", { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.6, ease, stagger: 0.09 }, 0.25);
+      // Scene 2 — the dot lands last.
+      tl.fromTo("#f02-dot", { opacity: 0, y: -90 }, { opacity: 1, y: 0, duration: 0.45, ease }, 0.92);
+      tl.fromTo("#f02-dot", { textShadow: "0 0 0px rgba(94,234,212,0)" }, { textShadow: "0 0 40px rgba(94,234,212,0.8)", duration: 0.3, ease: "power2.out" }, 1.3);
+      tl.to("#f02-dot", { textShadow: "0 0 12px rgba(94,234,212,0.25)", duration: 0.8, ease: "power2.out" }, 1.6);
+      // Scene 3 — the claim, phrase by phrase on the VO.
+      tl.fromTo("#f02-c1", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease }, 1.79);
+      tl.fromTo("#f02-live", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55, ease }, 3.03);
+      tl.fromTo("#f02-live", { textShadow: "0 0 0px rgba(94,234,212,0)" }, { textShadow: "0 0 28px rgba(94,234,212,0.9)", duration: 0.25, ease: "power2.out" }, 3.2);
+      tl.to("#f02-live", { textShadow: "0 0 0px rgba(94,234,212,0)", duration: 0.9, ease: "power2.out" }, 3.45);
+      // Scene 4 — held breather (no motion).
+      window.__timelines["02-meet-teal"] = tl;
+    })();
+  </script>
+</template>

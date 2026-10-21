@@ -1,0 +1,122 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Manrope", sans-serif;
+      color: #e6f4f2;
+    }
+    #f04-ground {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(70% 70% at 30% 50%, #0f2e2a 0%, #061412 70%);
+    }
+    #f04-phone {
+      position: absolute;
+      left: 90px;
+      top: 90px;
+      width: 416px;
+      height: 900px;
+      border-radius: 64px;
+      padding: 14px;
+      background: #1b2a28;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5), inset 0 0 0 2px #2c4440;
+    }
+    #f04-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 52px;
+      background: url("assets/screen-bikes-dark.png") top center / cover no-repeat;
+    }
+    #f04-card {
+      position: absolute;
+      left: 330px;
+      top: 570px;
+      width: 680px;
+      height: 319px;
+      border-radius: 30px;
+      background: url("assets/card-bike-dark.png") center / cover no-repeat;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(94, 234, 212, 0.55);
+    }
+    .f04-mark {
+      position: absolute;
+      top: 285px;
+      width: 120px;
+      height: 6px;
+      margin-left: -60px;
+      border-radius: 3px;
+      background: #5eead4;
+      transform-origin: left center;
+    }
+    #f04-copy {
+      position: absolute;
+      left: 600px;
+      top: 120px;
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+    #f04-eyebrow {
+      font-weight: 700;
+      font-size: 26px;
+      letter-spacing: 0.18em;
+      color: #5eead4;
+    }
+    #f04-head {
+      font-weight: 800;
+      font-size: 62px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+    #f04-head span {
+      display: inline-block;
+    }
+    #f04-sub {
+      font-weight: 600;
+      font-size: 28px;
+      line-height: 1.3;
+      color: #8fb3ad;
+    }
+  </style>
+  <div data-hf-id="hf-j8as" id="root" data-composition-id="04-bluebikes" data-width="1080" data-height="1080" data-duration="6.843">
+    <div data-hf-id="hf-9h2t" id="f04-ground" class="clip" data-start="0" data-duration="6.843" data-track-index="0"></div>
+    <div data-hf-id="hf-21h0" id="f04-phone" data-layout-allow-overflow class="clip" data-start="0" data-duration="6.843" data-track-index="1"><div data-hf-id="hf-88dy" id="f04-screen"></div></div>
+    <div data-hf-id="hf-wgvd" id="f04-copy" class="clip" data-start="0" data-duration="6.843" data-track-index="2">
+      <div data-hf-id="hf-kahb" id="f04-eyebrow">BLUEBIKES</div>
+      <div data-hf-id="hf-igg0" id="f04-head"><span data-hf-id="hf-3vdw" id="f04-h1">A bike —</span> <span data-hf-id="hf-7yiy" id="f04-h2">and a dock —</span> <span data-hf-id="hf-b1hv" id="f04-h3">before you walk.</span></div>
+      <div data-hf-id="hf-o2h3" id="f04-sub">Classic · electric · open docks</div>
+    </div>
+    <div data-hf-id="hf-s1g1" id="f04-card" class="clip" data-start="0" data-duration="6.843" data-track-index="3">
+      <div data-hf-id="hf-57mz" id="f04-m1" class="f04-mark" style="left: 20%"></div>
+      <div data-hf-id="hf-ckiw" id="f04-m2" class="f04-mark" style="left: 50.3%"></div>
+      <div data-hf-id="hf-crtf" id="f04-m3" class="f04-mark" style="left: 80.2%"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const tl = gsap.timeline({ paused: true });
+      const ease = "power3.out";
+      // Scene 1 — phone settles; eyebrow + headline phrases on "The closest Bluebikes".
+      tl.fromTo("#f04-phone", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.8, ease }, 0);
+      tl.fromTo("#f04-eyebrow", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease }, 0.3);
+      tl.fromTo("#f04-h1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease }, 1.2);
+      // Scene 2 — card slides out of the phone; counts underlined on their spoken words.
+      tl.fromTo("#f04-card", { opacity: 0, x: -170, scale: 0.9 }, { opacity: 1, x: 0, scale: 1, duration: 0.8, ease }, 1.92);
+      tl.fromTo("#f04-h2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease }, 4.22);
+      [["#f04-m1", 2.77], ["#f04-m2", 3.5], ["#f04-m3", 4.22]].forEach(([sel, t]) => {
+        tl.fromTo(sel, { scaleX: 0, opacity: 1 }, { scaleX: 1, duration: 0.45, ease }, t);
+      });
+      // Scene 3 — "before you walk over".
+      tl.fromTo("#f04-h3", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.55, ease }, 4.99);
+      tl.fromTo("#f04-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5, ease }, 5.25);
+      // Scene 4 — hold.
+      window.__timelines["04-bluebikes"] = tl;
+    })();
+  </script>
+</template>

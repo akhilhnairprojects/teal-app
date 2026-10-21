@@ -1,0 +1,47 @@
+{
+  "lines": [
+    {
+      "id": "01",
+      "sfx": [
+        "click-soft"
+      ]
+    },
+    {
+      "id": "02",
+      "sfx": [
+        "whoosh-short",
+        "chime"
+      ]
+    },
+    {
+      "id": "03",
+      "sfx": [
+        "whoosh-short",
+        "click-soft"
+      ]
+    },
+    {
+      "id": "04",
+      "sfx": [
+        "whoosh-short",
+        "pop"
+      ]
+    },
+    {
+      "id": "05",
+      "sfx": [
+        "whoosh",
+        "pop"
+      ]
+    },
+    {
+      "id": "06",
+      "sfx": [
+        "sparkle"
+      ]
+    }
+  ],
+  "bgm": {
+    "mode": "none"
+  }
+}
