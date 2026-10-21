@@ -1,7 +1,8 @@
 /**
  * Upload queue for recorded activities (spec §3.4). Serial; backoff 30 s, 2 min, 10 min, 1 h.
  * The server's summary replaces local metrics on success. `invalid_payload`, `invalid_time` and
- * `overlap` are final (rejected, never retried); everything else is retried. Activities recorded
+ * `overlap` are final (rejected, never retried); `too_fast` (the speed guard) deletes the activity on
+ * this phone too, so it can't count anywhere; everything else is retried. Activities recorded
  * while signed out (`ownerUserId: null`) wait until the user agrees to attach them.
  */
 import { useEffect, useSyncExternalStore } from 'react';
@@ -17,6 +18,7 @@ import {
   listLocalActivities,
   parseServerActivity,
   pruneSyncedPoints,
+  removeLocalActivity,
   subscribeActivities,
   updateLocalActivity,
   type LocalActivity,
@@ -96,6 +98,10 @@ async function uploadOne(a: LocalActivity): Promise<'synced' | 'rejected' | 'fai
   }
   const code: BackendErrorCode = r.ok ? 'unknown' : r.error.code;
   lastError = code;
+  if (code === 'too_fast') {
+    await removeLocalActivity(a.localId);
+    return 'rejected';
+  }
   if (FINAL_CODES.has(code)) {
     await updateLocalActivity(a.localId, (x) => ({
       ...x,

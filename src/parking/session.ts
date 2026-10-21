@@ -18,6 +18,7 @@ import { fetchBikeStations, type BikeStation } from '@/data/bluebikes';
 import { parkPath } from '@/features/shell/routes';
 import { bikeMinutes, isInBostonArea, type LatLng } from '@/lib/geo';
 import { cancelScheduled, ensureNotificationPermission, haptic, notifyLocal, scheduleLocal } from '@/notifications';
+import { speakUpdate } from '@/voice/speak';
 import type { Place } from '@/planner/types';
 import { clearActiveMode, setActiveMode } from '@/state/activeModes';
 
@@ -136,6 +137,7 @@ function handleEvent(e: ParkingEvent, now: number, hadTarget: boolean) {
     case 'rerouted': {
       const text = rerouteText(e, snapshot.here);
       haptic(e.reason === 'better' ? 'light' : 'warning');
+      speakUpdate(text);
       void notifyLocal({ title: e.reason === 'better' ? 'Better dock' : 'Dock changed', body: text, url: String(parkPath()) });
       publish({ notice: { kind: 'rerouted', text, at: now } });
       return;
@@ -151,6 +153,7 @@ function handleEvent(e: ParkingEvent, now: number, hadTarget: boolean) {
       const text = 'No open docks near your destination right now. Teal keeps checking.';
       if (hadTarget) {
         haptic('warning');
+        speakUpdate(text);
         void notifyLocal({ title: 'No open docks', body: text, url: String(parkPath()) });
       }
       publish({ notice: { kind: 'noDocks', text, at: now } });
@@ -158,6 +161,7 @@ function handleEvent(e: ParkingEvent, now: number, hadTarget: boolean) {
     }
     case 'arrived':
       haptic('success');
+      speakUpdate(`You've reached ${snapshot.state.target?.station.name ?? 'the dock'}. Dock your bike.`);
       stopRuntime();
       return;
     default:
@@ -175,6 +179,10 @@ function evaluate(now: number) {
   const clearNoDocks = r.state.target && snapshot.notice?.kind === 'noDocks';
   publish({ state: r.state, staleMs, ...(clearNoDocks ? { notice: null } : {}) });
   handleEvent(r.event, now, hadTarget);
+  // First dock found: say where to head, so the rider doesn't need to look at the screen.
+  if (!hadTarget && r.state.target && r.event.kind !== 'rerouted') {
+    speakUpdate(`Head to ${r.state.target.station.name}. ${r.state.target.station.openDocks} open ${r.state.target.station.openDocks === 1 ? 'dock' : 'docks'}.`);
+  }
   updateActiveMode();
 }
 

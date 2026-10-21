@@ -155,6 +155,13 @@ describe('sync', () => {
     expect(mockSupabase.raw.rpc).toHaveBeenCalledTimes(2);
   });
 
+  it('deletes an activity the server rejects as too fast', async () => {
+    mockSupabase.rpcError('submit_activity', 'too_fast');
+    await saveNewActivity(local(), POINTS);
+    expect(await syncPending('manual')).toEqual({ synced: 0, rejected: 1, failed: 0 });
+    expect(await getLocalActivity(LOCAL_ID)).toBeNull();
+  });
+
   it('does nothing while signed out, and attaches signed-out recordings after sign-in', async () => {
     mockSupabase.onRpc('submit_activity', () => ({ data: summary() }));
     mockAuth.current = { status: 'signedOut' };

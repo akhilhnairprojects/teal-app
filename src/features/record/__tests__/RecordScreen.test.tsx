@@ -36,6 +36,7 @@ const auth = jest.requireMock('@/backend/auth') as { updateMySettings: jest.Mock
 
 const IDLE: RecorderSnapshot = {
   phase: 'idle',
+  voided: null,
   kind: null,
   localId: null,
   startedAt: null,
@@ -73,6 +74,7 @@ jest.mock('@/activity/recorder', () => {
       discard: jest.fn(async () => {}),
       pendingRecovery: jest.fn(async () => null),
       recover: jest.fn(async () => ({ ok: true, value: undefined })),
+      dismissVoided: jest.fn(),
     },
   };
 });
@@ -109,6 +111,18 @@ beforeEach(async () => {
 });
 
 describe('RecordScreen', () => {
+  it('warns while too fast, and explains a run deleted for speed', async () => {
+    await withScreen(<RecordScreen initialKind="run" sessionId={null} />, async (r) => {
+      setSnap({ phase: 'recording', kind: 'run', warnings: ['tooFast'] });
+      await waitForText(r, 'the run will be deleted');
+      setSnap({ voided: { kind: 'run', at: 0 } });
+      await waitForText(r, 'Run deleted', 'won’t count on leaderboards or territory');
+      expect(r.root.findAllByProps({ testID: 'record-start' })).toHaveLength(0);
+      await press(r, 'record-voided-ok');
+      expect(recorder.dismissVoided).toHaveBeenCalled();
+    });
+  });
+
   it('explains the Expo Go limits on the first start, then starts the chosen kind', async () => {
     await withScreen(<RecordScreen initialKind="bike" sessionId="s1" />, async (r) => {
       await waitUntil(() => r.root.findAllByProps({ testID: 'record-start' }).some((n) => n.props.disabled === false));

@@ -1,10 +1,15 @@
 /**
- * Accounts (spec §1, §4): email one-time code sign-in, then a nickname. `AuthState` is a module store
- * read with `useSyncExternalStore` (the mapCenter.ts pattern). Auth starts the first time anything
- * reads it: it restores the saved session, listens for Supabase auth events and loads the profile.
+ * Accounts (spec §1, §4): Sign in with Apple or Google (an email code as a fallback), then a
+ * nickname. `AuthState` is a module store read with `useSyncExternalStore` (the mapCenter.ts
+ * pattern). Auth starts the first time anything reads it: it restores the saved session, listens for
+ * Supabase auth events and loads the profile.
  * Never logs emails or tokens.
  */
-import { AppState } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { AppState, Platform } from 'react-native';
 import { useSyncExternalStore } from 'react';
 
 import { wipeLocalUserData } from '@/activity/store';
@@ -264,6 +269,114 @@ export async function verifyEmailCode(email: string, code: string): Promise<Resu
     return { ok: false, error: toBackendError(e) };
   }
 }
+
+// --- single sign-on (Apple, Google) ------------------------------------------------------
+
+/** Path Google's sign-in returns to (`teal://auth/callback`, or `exp://…/--/auth/callback` in Expo Go). */
+export const OAUTH_CALLBACK_PATH = 'auth/callback';
+
+export const oauthRedirectUrl = (): string => Linking.createURL(OAUTH_CALLBACK_PATH);
+
+/** Sign in with Apple is offered on iPhone only (the native Apple sheet). */
+export async function appleSignInAvailable(): Promise<boolean> {
+  if (Platform.OS !== 'ios') return false;
+  try {
+    return await AppleAuthentication.isAvailableAsync();
+  } catch {
+    return false;
+  }
+}
+
+/** Finish a sign-in: adopt the new session and resolve the profile (or `needsProfile`). */
+async function adopt(userId: string | null | undefined): Promise<Result<AuthState>> {
+  if (!userId) return fail('unknown');
+  ensureStarted();
+  return ok(await applySession(userId));
+}
+
+/**
+ * Native Sign in with Apple, exchanged for a Supabase session. A random nonce is hashed into Apple's
+ * request and the raw value sent to Supabase, so the identity token can't be replayed. Nothing about
+ * the Apple account (name, private-relay email) is stored by Teal; people still pick a nickname.
+ */
+export async function signInWithApple(): Promise<Result<AuthState>> {
+  const sb = getSupabase();
+  if (!sb) return fail('not_configured');
+  if (!(await appleSignInAvailable())) return fail('provider_unavailable');
+  try {
+    const rawNonce = Crypto.randomUUID();
+    const hashedNonce = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, rawNonce);
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL],
+      nonce: hashedNonce,
+    });
+    if (!credential.identityToken) return fail('unknown');
+    const { data, error } = await sb.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken, nonce: rawNonce });
+    if (error) return { ok: false, error: toBackendError(error) };
+    return adopt(data.user?.id);
+  } catch (e) {
+    if (isObj(e) && e.code === 'ERR_REQUEST_CANCELED') return fail('sign_in_cancelled');
+    return { ok: false, error: toBackendError(e) };
+  }
+}
+
+/**
+ * Google through Supabase's hosted OAuth in an in-app browser sheet (works in Expo Go; native Google
+ * Sign-In needs a development build). PKCE: the redirect carries a one-time code, exchanged here.
+ */
+export async function signInWithGoogle(): Promise<Result<AuthState>> {
+  const sb = getSupabase();
+  if (!sb) return fail('not_configured');
+  const redirectTo = oauthRedirectUrl();
+  try {
+    const { data, error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, skipBrowserRedirect: true, queryParams: { prompt: 'select_account' } },
+    });
+    if (error) return { ok: false, error: toBackendError(error) };
+    if (!data.url) return fail('provider_unavailable');
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== 'success') return fail('sign_in_cancelled');
+    return await completeOAuthRedirect(result.url);
+  } catch (e) {
+    return { ok: false, error: toBackendError(e) };
+  }
+}
+
+/**
+ * Exchange the code on an OAuth redirect URL for a session. Also used by the `/auth/callback` route
+ * when the redirect opens the app directly. A provider error on the URL (e.g. the user declined) is
+ * reported as cancelled; a missing provider setup as unavailable.
+ */
+export async function completeOAuthRedirect(url: string): Promise<Result<AuthState>> {
+  const sb = getSupabase();
+  if (!sb) return fail('not_configured');
+  const { queryParams } = Linking.parse(url);
+  const param = (k: string) => {
+    const v = queryParams?.[k];
+    return typeof v === 'string' ? v : null;
+  };
+  const providerError = param('error_code') ?? param('error');
+  if (providerError) return fail(providerError === 'access_denied' ? 'sign_in_cancelled' : 'provider_unavailable');
+  const code = param('code');
+  if (!code) return fail('sign_in_cancelled');
+  // The browser sheet and the callback route can both see the same redirect; redeem a code once.
+  const pending = exchanges.get(code);
+  if (pending) return pending;
+  const run = (async (): Promise<Result<AuthState>> => {
+    try {
+      const { data, error } = await sb.auth.exchangeCodeForSession(code);
+      if (error) return { ok: false, error: toBackendError(error) };
+      return adopt(data.user?.id);
+    } catch (e) {
+      return { ok: false, error: toBackendError(e) };
+    }
+  })();
+  exchanges.set(code, run);
+  return run;
+}
+
+const exchanges = new Map<string, Promise<Result<AuthState>>>();
 
 // --- profile -----------------------------------------------------------------------------
 

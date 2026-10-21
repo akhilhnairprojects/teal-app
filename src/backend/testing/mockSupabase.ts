@@ -122,6 +122,9 @@ export function createMockSupabase() {
     }),
     signInWithOtp: jest.fn(async (_args: unknown) => ({ data: {}, error: null as unknown })),
     verifyOtp: jest.fn(async (_args: unknown) => ({ data: { session: state.session }, error: null as unknown })),
+    signInWithIdToken: jest.fn(async (_args: unknown) => ({ data: { user: state.session?.user ?? null, session: state.session }, error: null as unknown })),
+    signInWithOAuth: jest.fn(async (_args: unknown) => ({ data: { url: 'https://example.supabase.co/auth/v1/authorize?provider=google' as string | null }, error: null as unknown })),
+    exchangeCodeForSession: jest.fn(async (_code: string) => ({ data: { user: state.session?.user ?? null, session: state.session }, error: null as unknown })),
     signOut: jest.fn(async () => {
       state.session = null;
       authListeners.forEach((l) => l('SIGNED_OUT', null));

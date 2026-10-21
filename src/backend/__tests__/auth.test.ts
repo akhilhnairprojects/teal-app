@@ -3,12 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockSession, mockSupabase } from '@/backend/testing/mockSupabase';
 
 import {
+  appleSignInAvailable,
   claimNickname,
+  completeOAuthRedirect,
   deleteMyAccount,
   getAuthState,
   normalizeCode,
   requestEmailCode,
   resetAuthForTests,
+  signInWithApple,
+  signInWithGoogle,
   signOut,
   subscribeAuth,
   updateMySettings,
@@ -20,6 +24,21 @@ import { backendError, toBackendError } from '../errors';
 import { rpc } from '../rpc';
 
 jest.mock('@/backend/client', () => jest.requireActual('@/backend/testing/mockSupabase').mockClientModule());
+jest.mock('expo-apple-authentication', () => ({
+  isAvailableAsync: jest.fn(async () => true),
+  signInAsync: jest.fn(async () => ({ identityToken: 'apple-id-token' })),
+  AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+}));
+jest.mock('expo-crypto', () => ({
+  randomUUID: () => 'raw-nonce',
+  digestStringAsync: jest.fn(async () => 'hashed-nonce'),
+  CryptoDigestAlgorithm: { SHA256: 'SHA-256' },
+}));
+jest.mock('expo-web-browser', () => ({ openAuthSessionAsync: jest.fn() }));
+jest.mock('expo-linking', () => ({
+  createURL: (path: string) => `teal://${path}`,
+  parse: (url: string) => ({ queryParams: Object.fromEntries(new URL(url.replace('teal://', 'https://x/')).searchParams) }),
+}));
 jest.mock('@/notifications', () => ({
   registerForPush: jest.fn(async () => 'noProjectId'),
   unregisterPush: jest.fn(async () => {}),
@@ -178,6 +197,67 @@ describe('sign-in with an email code', () => {
     });
     const r = await verifyEmailCode('ana@example.com', '123456');
     expect(!r.ok && r.error.code).toBe('otp_expired');
+  });
+});
+
+describe('single sign-on', () => {
+  const apple = jest.requireMock('expo-apple-authentication') as { isAvailableAsync: jest.Mock; signInAsync: jest.Mock };
+  const browser = jest.requireMock('expo-web-browser') as { openAuthSessionAsync: jest.Mock };
+
+  beforeEach(async () => {
+    getAuthState();
+    await waitFor('signedOut');
+    mockSupabase.onRpc('get_my_profile', () => ({ data: null }));
+  });
+
+  it('signs in with Apple using a hashed nonce and a replay-proof raw nonce', async () => {
+    expect(await appleSignInAvailable()).toBe(true);
+    mockSupabase.raw.auth.signInWithIdToken.mockResolvedValueOnce({ data: { user: { id: ME }, session: mockSession(ME) }, error: null });
+    const r = await signInWithApple();
+    expect(apple.signInAsync).toHaveBeenCalledWith(expect.objectContaining({ nonce: 'hashed-nonce' }));
+    expect(mockSupabase.raw.auth.signInWithIdToken).toHaveBeenCalledWith({ provider: 'apple', token: 'apple-id-token', nonce: 'raw-nonce' });
+    expect(r).toEqual({ ok: true, value: { status: 'needsProfile', userId: ME } });
+  });
+
+  it('treats a dismissed Apple sheet as cancelled', async () => {
+    apple.signInAsync.mockRejectedValueOnce(Object.assign(new Error('canceled'), { code: 'ERR_REQUEST_CANCELED' }));
+    const r = await signInWithApple();
+    expect(!r.ok && r.error.code).toBe('sign_in_cancelled');
+  });
+
+  it('maps a provider that is not enabled yet', async () => {
+    mockSupabase.raw.auth.signInWithIdToken.mockResolvedValueOnce({
+      data: { user: null, session: null },
+      error: { __isAuthError: true, name: 'AuthApiError', status: 400, code: 'provider_disabled', message: 'Provider is not enabled' },
+    });
+    const r = await signInWithApple();
+    expect(!r.ok && r.error.code).toBe('provider_unavailable');
+  });
+
+  it('signs in with Google through the browser and exchanges the returned code', async () => {
+    browser.openAuthSessionAsync.mockResolvedValueOnce({ type: 'success', url: 'teal://auth/callback?code=abc123' });
+    mockSupabase.raw.auth.exchangeCodeForSession.mockResolvedValueOnce({ data: { user: { id: ME }, session: mockSession(ME) }, error: null });
+    const r = await signInWithGoogle();
+    expect(mockSupabase.raw.auth.signInWithOAuth).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'google', options: expect.objectContaining({ redirectTo: 'teal://auth/callback', skipBrowserRedirect: true }) }),
+    );
+    expect(mockSupabase.raw.auth.exchangeCodeForSession).toHaveBeenCalledWith('abc123');
+    expect(r).toEqual({ ok: true, value: { status: 'needsProfile', userId: ME } });
+  });
+
+  it('reports a closed browser or a declined consent as cancelled', async () => {
+    browser.openAuthSessionAsync.mockResolvedValueOnce({ type: 'cancel' });
+    expect((await signInWithGoogle()).ok).toBe(false);
+    const declined = await completeOAuthRedirect('teal://auth/callback?error=access_denied');
+    expect(!declined.ok && declined.error.code).toBe('sign_in_cancelled');
+    expect(mockSupabase.raw.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+  });
+
+  it('redeems a code only once when the browser and the callback route both see it', async () => {
+    mockSupabase.raw.auth.exchangeCodeForSession.mockResolvedValue({ data: { user: { id: ME }, session: mockSession(ME) }, error: null });
+    const [a, b] = await Promise.all([completeOAuthRedirect('teal://auth/callback?code=once'), completeOAuthRedirect('teal://auth/callback?code=once')]);
+    expect(a).toEqual(b);
+    expect(mockSupabase.raw.auth.exchangeCodeForSession).toHaveBeenCalledTimes(1);
   });
 });
 

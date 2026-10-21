@@ -181,6 +181,15 @@ describe('ParkingScreen', () => {
     });
   });
 
+  it('falls back to keyboard dictation when there is no speech recognizer (Expo Go)', async () => {
+    mockSnap.current = { ...navSnap(), state: INITIAL_PARKING_STATE };
+    await withScreen(<ParkingScreen params={params} />, async (r) => {
+      await waitForText(r, 'Riding a Bluebike?');
+      act(() => r.root.findByProps({ testID: 'park-mic' }).props.onPress());
+      await waitForText(r, 'Tap the microphone on your keyboard');
+    });
+  });
+
   it('offers a destination passed in the link', async () => {
     mockSnap.current = { ...navSnap(), state: INITIAL_PARKING_STATE };
     await withScreen(<ParkingScreen params={{ toName: 'Fenway', toLat: 42.3467, toLon: -71.0972 }} />, async (r) => {

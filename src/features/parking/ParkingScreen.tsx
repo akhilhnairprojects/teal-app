@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { BottomSheetTextInput, useBottomSheetInternal } from '@gorhom/bottom-sheet';
-import { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Button, Card } from '@/features/account/formUi';
@@ -20,6 +20,8 @@ import { useMapOverlay } from '@/state/mapOverlay';
 import { requestSheetDetent } from '@/state/sheet';
 import { fonts, radius, sheet, usePalette, type Palette } from '@/theme';
 import { EmptyState, SheetPage, SheetScrollView } from '@/ui';
+import { DICTATION_COPY, dictationErrorText, useDictation } from '@/voice/dictation';
+import { useSpokenUpdates } from '@/voice/speak';
 
 import { checkedAgoText, dockDistanceText, etaText, walkMinutesText } from './format';
 import { parkingOverlay } from './overlay';
@@ -98,6 +100,25 @@ function Choose({ params }: { params: ParkParams }) {
   const [busy, setBusy] = useState(false);
   const [offered, setOffered] = useState<Place | null>(() => paramPlace(params));
   const suggestions = useGeocodeSuggestions(text, g, bias);
+  const inputRef = useRef<TextInput>(null);
+  const [keyboardTip, setKeyboardTip] = useState(false);
+  // Bias recognition toward T station names (Bluebikes station names follow streets the recognizer knows).
+  const placeNames = useMemo(
+    () => (g ? Object.values(g.stops).filter((st) => st.locationType === 1).map((st) => st.name) : []),
+    [g],
+  );
+  const dictation = useDictation({ onText: setText, contextualStrings: placeNames });
+  const onMic = () => {
+    setMessage(null);
+    if (dictation.supported) {
+      if (dictation.listening) dictation.stop();
+      else void dictation.start();
+      return;
+    }
+    // Expo Go has no speech recognizer: open the keyboard, whose dictation mic does the same job.
+    setKeyboardTip(true);
+    inputRef.current?.focus();
+  };
 
   const start = async (p: Place) => {
     Keyboard.dismiss();
@@ -139,19 +160,45 @@ function Choose({ params }: { params: ParkParams }) {
       <View style={s.searchBox}>
         <Ionicons name="flag" size={16} color={c.brandDeep} />
         <SheetTextInput
+          ref={inputRef}
           testID="park-destination-input"
           value={text}
           onChangeText={setText}
           onSubmitEditing={() => void submit()}
           returnKeyType="search"
           autoCorrect={false}
-          placeholder="Where are you riding to?"
+          placeholder={dictation.listening ? DICTATION_COPY.listening : 'Where are you riding to?'}
           placeholderTextColor={c.textMuted}
           accessibilityLabel="Destination"
           style={s.input}
         />
         {busy ? <ActivityIndicator color={c.brand} /> : null}
+        <Pressable
+          testID="park-mic"
+          onPress={onMic}
+          accessibilityRole="button"
+          accessibilityLabel={dictation.listening ? 'Stop listening' : 'Say your destination'}
+          accessibilityState={{ selected: dictation.listening }}
+          hitSlop={8}
+          style={[s.mic, dictation.listening && { backgroundColor: c.brand }]}
+        >
+          <Ionicons name={dictation.listening ? 'mic' : 'mic-outline'} size={18} color={dictation.listening ? c.onBrand : c.brandDeep} />
+        </Pressable>
       </View>
+      {dictation.listening ? (
+        <Text style={s.small} testID="park-listening">{DICTATION_COPY.listening}</Text>
+      ) : keyboardTip && !dictation.supported ? (
+        <View style={s.message} testID="park-keyboard-tip">
+          <Ionicons name="mic-outline" size={15} color={c.brandDeep} />
+          <Text style={[s.messageText, { color: c.text }]}>{DICTATION_COPY.keyboardTip}</Text>
+        </View>
+      ) : null}
+      {dictation.error && dictation.error !== 'unavailable' ? (
+        <View style={s.message}>
+          <Ionicons name="alert-circle" size={15} color={c.warning} />
+          <Text style={s.messageText}>{dictationErrorText(dictation.error)}</Text>
+        </View>
+      ) : null}
       {message ? (
         <View style={s.message}>
           <Ionicons name="alert-circle" size={15} color={c.warning} />
@@ -180,6 +227,7 @@ function Navigating({ snap }: { snap: ParkingSnapshot }) {
   const { state, here } = snap;
   const target = state.target;
   const [mapsFailed, setMapsFailed] = useState(false);
+  const [spoken, setSpoken] = useSpokenUpdates();
 
   const banners: { key: string; icon: keyof typeof Ionicons.glyphMap; text: string; tone: string }[] = [];
   if (snap.notice) banners.push({ key: 'notice', icon: snap.notice.kind === 'rerouted' ? 'swap-horizontal' : 'alert-circle', text: snap.notice.text, tone: c.warning });
@@ -234,6 +282,16 @@ function Navigating({ snap }: { snap: ParkingSnapshot }) {
           <Text style={s.muted}>Finding open docks…</Text>
         </View>
       ) : null}
+      <Pressable
+        testID="park-spoken"
+        onPress={() => setSpoken(!spoken)}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: spoken }}
+        style={s.spokenRow}
+      >
+        <Ionicons name={spoken ? 'volume-high' : 'volume-mute'} size={16} color={spoken ? c.brand : c.textMuted} />
+        <Text style={s.spokenText}>{spoken ? 'Spoken updates on' : 'Spoken updates off'}</Text>
+      </Pressable>
       <View style={s.footerRow}>
         <Text style={s.small}>{checkedAgoText(state.lastCheckAt, now)}</Text>
         <Pressable onPress={() => void refreshParking()} accessibilityRole="button" hitSlop={8}>
@@ -305,4 +363,7 @@ const styles = (c: Palette) =>
     bannerText: { flex: 1, fontFamily: fonts.medium, fontSize: 13, color: c.text },
     loading: { alignItems: 'center', gap: 8, paddingVertical: 24 },
     footerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4 },
+    mic: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', backgroundColor: c.brandSoft },
+    spokenRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', paddingHorizontal: 4, paddingVertical: 4 },
+    spokenText: { fontFamily: fonts.semibold, fontSize: 13, color: c.text },
   });

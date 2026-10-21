@@ -4,6 +4,7 @@
  */
 import { formatDistanceM, formatDurationMs, formatPace, METERS_PER_MILE, type Units } from '@/activity/format';
 import type { RecorderSnapshot, RecorderWarning } from '@/activity/recorder';
+import { SPEED_GUARD_COPY } from '@/activity/speedGuard';
 import type { ActivityKind, LiveStats } from '@/activity/types';
 
 export const RECORD_COPY = {
@@ -73,6 +74,7 @@ export const GPS_LABEL: Record<LiveStats['gpsQuality'], string> = {
 };
 
 export type RecordBanner =
+  | { key: 'tooFast'; text: string }
   | { key: 'backgroundGap'; text: string }
   | { key: 'vehicleSegment'; text: string }
   | { key: 'poorGps'; text: string }
@@ -81,9 +83,10 @@ export type RecordBanner =
   | { key: 'gpsStopped'; text: string };
 
 /** Warning banners in priority order (`foregroundOnly` is the always-on chip, not a banner). */
-export function recordBanners(s: Pick<RecorderSnapshot, 'warnings' | 'backgroundGapMs' | 'phase'>): RecordBanner[] {
+export function recordBanners(s: Pick<RecorderSnapshot, 'warnings' | 'backgroundGapMs' | 'phase' | 'kind'>): RecordBanner[] {
   const has = (w: RecorderWarning) => s.warnings.includes(w);
   const out: RecordBanner[] = [];
+  if (has('tooFast') && s.kind) out.push({ key: 'tooFast', text: SPEED_GUARD_COPY.warnBody(s.kind) });
   if (has('permissionDenied')) out.push({ key: 'permissionDenied', text: RECORD_COPY.permissionDenied, settings: true });
   if (has('servicesOff')) out.push({ key: 'servicesOff', text: RECORD_COPY.servicesOff, settings: true });
   if (has('gpsStopped') && s.phase === 'paused') out.push({ key: 'gpsStopped', text: RECORD_COPY.gpsStopped });

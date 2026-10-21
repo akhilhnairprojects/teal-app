@@ -32,6 +32,14 @@ jest.mock('expo-router', () => {
 });
 
 jest.mock('@/backend/config', () => ({ BACKEND_CONFIGURED: true }));
+jest.mock('expo-apple-authentication', () => {
+  const { Pressable } = jest.requireActual('react-native');
+  return {
+    AppleAuthenticationButton: (p: { testID?: string; onPress: () => void }) => <Pressable testID={p.testID} onPress={p.onPress} />,
+    AppleAuthenticationButtonType: { CONTINUE: 1 },
+    AppleAuthenticationButtonStyle: { WHITE: 0, BLACK: 2 },
+  };
+});
 
 const ME = '11111111-1111-4111-8111-111111111111';
 const PROFILE = {
@@ -54,6 +62,9 @@ jest.mock('@/backend/auth', () => ({
   requestEmailCode: jest.fn(async () => ({ ok: true, value: { resendAfterMs: 60_000 } })),
   verifyEmailCode: jest.fn(async () => ({ ok: true, value: { status: 'needsProfile', userId: '11111111-1111-4111-8111-111111111111' } })),
   normalizeCode: (c: string) => c.replace(/\D/g, ''),
+  appleSignInAvailable: jest.fn(async () => true),
+  signInWithApple: jest.fn(async () => ({ ok: true, value: { status: 'needsProfile', userId: '11111111-1111-4111-8111-111111111111' } })),
+  signInWithGoogle: jest.fn(async () => ({ ok: false, error: { code: 'sign_in_cancelled', message: 'Sign-in was cancelled.', retryable: false } })),
   claimNickname: jest.fn(async () => ({ ok: false, error: { code: 'nickname_taken', message: 'That nickname is taken.', retryable: false } })),
   validateNicknameLocally: jest.requireActual('@/backend/auth').validateNicknameLocally,
   updateMySettings: jest.fn(async () => ({ ok: true, value: {} })),
@@ -126,6 +137,7 @@ describe('SignInGate', () => {
 describe('SignInScreen', () => {
   it('sends the code, then verifies a pasted code and continues to the nickname screen', async () => {
     await withScreen(<SignInScreen next="/leaderboards" />, async (r) => {
+      press(r, 'sign-in-show-email');
       act(() => r.root.findByProps({ testID: 'sign-in-email' }).props.onChangeText('ana@example.com'));
       press(r, 'sign-in-send');
       await waitForText(r, 'Enter the code we sent to ana@example.com');
@@ -146,9 +158,32 @@ describe('SignInScreen', () => {
       error: { code: 'email_rate_limited', message: 'Too many sign-in emails right now. Try again later.', retryable: true },
     });
     await withScreen(<SignInScreen next={null} />, async (r) => {
+      press(r, 'sign-in-show-email');
       act(() => r.root.findByProps({ testID: 'sign-in-email' }).props.onChangeText('ana@example.com'));
       press(r, 'sign-in-send');
       await waitForText(r, 'Too many sign-in emails right now. Try again later.');
+    });
+  });
+
+  it('leads with Apple and Google, hides email until asked', async () => {
+    await withScreen(<SignInScreen next="/leaderboards" />, async (r) => {
+      await waitUntil(() => r.root.findAllByProps({ testID: 'sign-in-apple' }).length > 0);
+      expect(r.root.findAllByProps({ testID: 'sign-in-google' }).length).toBeGreaterThan(0);
+      expect(r.root.findAllByProps({ testID: 'sign-in-email' })).toHaveLength(0);
+      press(r, 'sign-in-apple');
+      await waitUntil(() => router.replace.mock.calls.length > 0);
+      expect(auth.signInWithApple).toHaveBeenCalled();
+      expect(router.replace).toHaveBeenCalledWith('/account/nickname?next=%2Fleaderboards');
+    });
+  });
+
+  it('stays quiet when Google sign-in is cancelled', async () => {
+    await withScreen(<SignInScreen next={null} />, async (r) => {
+      press(r, 'sign-in-google');
+      await waitUntil(() => auth.signInWithGoogle.mock.calls.length > 0);
+      await act(async () => {});
+      expect(textOf(r)).not.toContain('Sign-in was cancelled.');
+      expect(router.replace).not.toHaveBeenCalled();
     });
   });
 

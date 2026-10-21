@@ -11,16 +11,19 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { getAuthState } from '@/backend/auth';
 import type { BackendError, Result } from '@/backend/errors';
 import { recordPath } from '@/features/shell/routes';
+import { haptic, notifyLocal } from '@/notifications';
 import { readCache, removeCache, writeCache } from '@/lib/cache';
 import { distanceMeters } from '@/lib/geo';
 import { uuidv4 } from '@/lib/id';
 import { encodePolyline } from '@/lib/polyline';
 import { clearActiveMode, setActiveMode } from '@/state/activeModes';
+import { speakUpdate } from '@/voice/speak';
 
 import { createGpsFilter, FILTER_CONFIG, type GpsFilter } from './filter';
 import { formatDistanceM, getUnits } from './format';
 import { acquireFixes, canTrackInBackground, type HubError } from './locationHub';
 import { computeTrackMetrics, recentPath, SEGMENT_RULES } from './metrics';
+import { createSpeedGuard, SPEED_GUARD_COPY, trackOverspeed, type SpeedGuard } from './speedGuard';
 import { saveNewActivity, type LocalActivity } from './store';
 import { syncPending } from './sync';
 import type { ActivityKind, LatLng, LiveStats, RawFix, TrackPoint } from './types';
@@ -34,7 +37,9 @@ export type RecorderWarning =
   | 'permissionDenied'
   | 'servicesOff'
   /** Paused with no GPS lease (a resumed recording whose GPS could not start); Resume retries. */
-  | 'gpsStopped';
+  | 'gpsStopped'
+  /** Sustained faster than the activity allows; keep it up and the recording is deleted. */
+  | 'tooFast';
 
 export type RecorderSnapshot = {
   phase: RecorderPhase;
@@ -46,6 +51,8 @@ export type RecorderSnapshot = {
   groupSessionId: string | null;
   backgroundGapMs: number;
   warnings: RecorderWarning[];
+  /** The last recording was deleted by the too-fast guard (shown until dismissed or a new start). */
+  voided: { kind: ActivityKind; at: number } | null;
 };
 
 export const RECORDER = {
@@ -98,6 +105,7 @@ const IDLE: RecorderSnapshot = {
   groupSessionId: null,
   backgroundGapMs: 0,
   warnings: [],
+  voided: null,
 };
 
 // --- runtime state -----------------------------------------------------------------------
@@ -128,6 +136,8 @@ let path: LatLng[] = [];
 let pathAt = 0;
 let persistedFullChunks = 0;
 let lastPublish = 0;
+let guard: SpeedGuard | null = null;
+let voided: RecorderSnapshot['voided'] = null;
 
 /** A GPS re-acquisition in progress (resume after a failed recovery), so taps don't stack. */
 let reacquiring: Promise<Result<void>> | null = null;
@@ -180,7 +190,7 @@ function liveStats(now: number): LiveStats {
 }
 
 function buildSnapshot(now: number): RecorderSnapshot {
-  if (phase === 'idle') return { ...IDLE, warnings: [...warnings] };
+  if (phase === 'idle') return { ...IDLE, warnings: [...warnings], voided };
   if (now - pathAt >= RECORDER.pathEveryMs || path.length === 0) {
     path = recentPath(points, RECORDER.pathMaxPoints);
     pathAt = now;
@@ -195,6 +205,7 @@ function buildSnapshot(now: number): RecorderSnapshot {
     groupSessionId,
     backgroundGapMs,
     warnings: [...warnings],
+    voided,
   };
 }
 
@@ -290,12 +301,40 @@ function onFix(fix: RawFix) {
     schedulePublish();
     return;
   }
+  guard ??= createSpeedGuard(kind);
+  const ev = guard.push(fix);
+  if (ev === 'void') {
+    void voidRecording(now);
+    return;
+  }
+  if (ev === 'warn') {
+    warnings.add('tooFast');
+    haptic('warning');
+    speakUpdate(SPEED_GUARD_COPY.warnSpoken(kind));
+    void notifyLocal({ title: SPEED_GUARD_COPY.warnTitle(kind), body: SPEED_GUARD_COPY.warnBody(kind), url: String(recordPath({ kind })) });
+  }
   const r = filter.push(fix, now);
   vehicleSuspected = r.vehicleSuspected;
   if (r.vehicleSuspected) warnings.add('vehicleSegment');
   if (r.point) appendPoint(r.point);
   updateAutoPause(now);
   schedulePublish();
+}
+
+/**
+ * The too-fast guard fired a second time: stop, delete the in-progress recording (nothing is saved or
+ * uploaded) and tell the person why.
+ */
+async function voidRecording(now: number): Promise<void> {
+  const k = kind;
+  stopRuntime();
+  await clearPersisted();
+  resetRun();
+  voided = { kind: k, at: now };
+  publishNow();
+  haptic('warning');
+  speakUpdate(SPEED_GUARD_COPY.voidTitle(k) + '. ' + SPEED_GUARD_COPY.voidBody(k));
+  void notifyLocal({ title: SPEED_GUARD_COPY.voidTitle(k), body: SPEED_GUARD_COPY.voidBody(k), url: String(recordPath({ kind: k })) });
 }
 
 function onAppState(s: AppStateStatus) {
@@ -358,6 +397,7 @@ function resetRun(): void {
   pathAt = 0;
   persistedFullChunks = 0;
   reacquiring = null;
+  guard = null;
 }
 
 // --- persistence -------------------------------------------------------------------------
@@ -409,13 +449,15 @@ async function saveRecorded(o: {
   groupSessionId: string | null;
   points: TrackPoint[];
   shareRoute: boolean;
-}): Promise<LocalActivity | { discarded: 'tooShort' }> {
+}): Promise<LocalActivity | { discarded: 'tooShort' | 'tooFast' }> {
   if (o.points.length < 2) return { discarded: 'tooShort' };
   // Rebase so the first point is t = 0 (the server requires it).
   const t0 = o.points[0].t;
   const rebased = t0 === 0 ? o.points : o.points.map((p) => ({ ...p, t: p.t - t0 }));
   const metrics = computeTrackMetrics(rebased, o.kind);
   if (metrics.distanceM < RECORDER.minDistanceM || metrics.elapsedMs < RECORDER.minDurationMs) return { discarded: 'tooShort' };
+  // Same rule as the server: a track that stayed too fast after the warning is never saved.
+  if (trackOverspeed(rebased, o.kind).voided) return { discarded: 'tooFast' };
   const auth = getAuthState();
   const owner = auth.status === 'signedIn' ? auth.userId : null;
   const start = o.startedAt + t0;
@@ -504,6 +546,7 @@ export const recorder = {
     if (phase === 'acquiring' || phase === 'recording' || phase === 'paused') return { ok: false, error: err('A recording is already in progress.') };
     if (await readHeader()) return { ok: false, error: err('Resume or save your unfinished recording first.') };
     resetRun();
+    voided = null;
     kind = o.kind;
     groupSessionId = o.groupSessionId ?? null;
     localId = uuidv4();
@@ -556,8 +599,11 @@ export const recorder = {
     return Promise.resolve(OK);
   },
 
-  /** Stop and save. Under 100 m or 60 s the recording is discarded. */
-  async finish(o: { shareRoute: boolean }): Promise<LocalActivity | { discarded: 'tooShort' }> {
+  /**
+   * Stop and save. Under 100 m or 60 s the recording is discarded (`tooShort`); a track that stayed
+   * too fast after the warning is deleted (`tooFast`).
+   */
+  async finish(o: { shareRoute: boolean }): Promise<LocalActivity | { discarded: 'tooShort' | 'tooFast' }> {
     if (phase !== 'recording' && phase !== 'paused' && phase !== 'acquiring') return { discarded: 'tooShort' };
     const now = Date.now();
     const finalStats = liveStats(now);
@@ -568,7 +614,9 @@ export const recorder = {
         : ({ discarded: 'tooShort' } as const);
     await clearPersisted();
     if ('discarded' in result) {
+      const k = kind;
       resetRun();
+      if (result.discarded === 'tooFast') voided = { kind: k, at: now };
       publishNow();
       clearActiveMode('recording');
       return result;
@@ -579,6 +627,13 @@ export const recorder = {
     listeners.forEach((l) => l(snapshot));
     clearActiveMode('recording');
     return result;
+  },
+
+  /** Hide the "deleted for speed" notice. */
+  dismissVoided(): void {
+    if (!voided) return;
+    voided = null;
+    publishNow();
   },
 
   async discard(): Promise<void> {
@@ -613,7 +668,8 @@ export const recorder = {
     }
     if (action === 'save') {
       resetRun();
-      await saveRecorded({ localId: h.localId, kind: h.kind, startedAt: h.startedAt, groupSessionId: h.groupSessionId, points: saved, shareRoute: false });
+      const r = await saveRecorded({ localId: h.localId, kind: h.kind, startedAt: h.startedAt, groupSessionId: h.groupSessionId, points: saved, shareRoute: false });
+      if ('discarded' in r && r.discarded === 'tooFast') voided = { kind: h.kind, at: Date.now() };
       await clearPersisted();
       publishNow();
       return OK;
@@ -660,6 +716,7 @@ export function useRecorder(): RecorderSnapshot {
 export function resetRecorderForTests(): void {
   stopRuntime();
   resetRun();
+  voided = null;
   snapshot = IDLE;
   lastPublish = 0;
   listeners.clear();

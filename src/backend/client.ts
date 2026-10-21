@@ -21,7 +21,9 @@ export function getSupabase(): TealSupabase | null {
   if (client !== undefined) return client;
   client = BACKEND_CONFIGURED
     ? createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-        auth: { storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+        // PKCE: Google sign-in returns a one-time `code` to the app's redirect URL, exchanged for the
+        // session here, so tokens never travel in the URL. Email codes and Apple id tokens are unaffected.
+        auth: { storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' },
       })
     : null;
   return client;

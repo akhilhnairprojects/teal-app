@@ -4,6 +4,7 @@ import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { formatDistanceM, formatDurationMs, formatPace, useUnits } from '@/activity/format';
 import { recorder, useRecorder } from '@/activity/recorder';
+import { SPEED_GUARD_COPY } from '@/activity/speedGuard';
 import { getLocalPoints, type LocalActivity } from '@/activity/store';
 import type { ActivityKind } from '@/activity/types';
 import { updateMySettings, useAuth, type MyProfile } from '@/backend/auth';
@@ -160,7 +161,9 @@ function RecordBody({ initialKind, sessionId }: { initialKind: ActivityKind | nu
     const r = await recorder.finish({ shareRoute: share });
     setBusy(false);
     setReview(null);
-    setOutcome('discarded' in r ? { discarded: true } : { saved: r });
+    // A track deleted for speed is reported by the recorder (`snap.voided`), not as an outcome.
+    if (!('discarded' in r)) setOutcome({ saved: r });
+    else if (r.discarded === 'tooShort') setOutcome({ discarded: true });
   };
 
   const discard = async () => {
@@ -198,7 +201,15 @@ function RecordBody({ initialKind, sessionId }: { initialKind: ActivityKind | nu
         <OutcomeCard outcome={outcome} units={units} signedIn={auth.status === 'signedIn'} profile={profile} onAgain={() => setOutcome(null)} />
       ) : null}
 
-      {!active && !outcome ? (
+      {snap.voided && !active ? (
+        <Card testID="record-voided">
+          <Text style={s.cardTitle}>{SPEED_GUARD_COPY.voidTitle(snap.voided.kind)}</Text>
+          <Body>{SPEED_GUARD_COPY.voidBody(snap.voided.kind)}</Body>
+          <Button label="OK" kind="secondary" onPress={() => recorder.dismissVoided()} testID="record-voided-ok" />
+        </Card>
+      ) : null}
+
+      {!active && !outcome && !snap.voided ? (
         <>
           <View style={s.segment} accessibilityRole="tablist">
             {(['run', 'bike'] as const).map((k) => (

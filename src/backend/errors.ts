@@ -13,6 +13,8 @@ export type BackendErrorCode =
   | 'email_rate_limited'
   | 'otp_invalid'
   | 'otp_expired'
+  | 'sign_in_cancelled'
+  | 'provider_unavailable'
   | 'nickname_invalid'
   | 'nickname_taken'
   | 'nickname_too_soon'
@@ -25,6 +27,7 @@ export type BackendErrorCode =
   | 'invalid_payload'
   | 'invalid_time'
   | 'overlap'
+  | 'too_fast'
   | 'trace_expired'
   | 'unknown';
 
@@ -42,6 +45,8 @@ export const ERROR_COPY: Record<BackendErrorCode, string> = {
   email_rate_limited: 'Too many sign-in emails right now. Try again later.',
   otp_invalid: 'That code didn’t work. Check it and try again.',
   otp_expired: 'That code has expired or is wrong. Request a new one.',
+  sign_in_cancelled: 'Sign-in was cancelled.',
+  provider_unavailable: 'That sign-in option isn’t available yet. Try another one.',
   nickname_invalid: 'Use 3–20 letters, numbers, dots, dashes or underscores, starting with a letter or number.',
   nickname_taken: 'That nickname is taken.',
   nickname_too_soon: 'You can change your nickname once a week.',
@@ -54,6 +59,7 @@ export const ERROR_COPY: Record<BackendErrorCode, string> = {
   invalid_payload: 'Something about that request wasn’t right.',
   invalid_time: 'This activity’s times don’t add up, so it can’t be counted.',
   overlap: 'This activity overlaps another one you recorded.',
+  too_fast: 'This activity stayed faster than running or Bluebike pace, so it was deleted and won’t count.',
   trace_expired: 'The full route for this activity is no longer stored.',
   unknown: 'Something went wrong. Try again.',
 };
@@ -77,6 +83,7 @@ const SERVER_CODES: ReadonlySet<string> = new Set<BackendErrorCode>([
   'invalid_payload',
   'invalid_time',
   'overlap',
+  'too_fast',
   'trace_expired',
 ]);
 
@@ -106,9 +113,12 @@ function authCode(e: object): BackendErrorCode | null {
   if (code === 'over_request_rate_limit' || status === 429) return 'rate_limited';
   // Supabase answers an expired *and* a wrong code with `otp_expired` ("Token has expired or is invalid").
   if (code === 'otp_expired') return 'otp_expired';
-  if (code === 'validation_failed' || code === 'bad_jwt' || code === 'invalid_credentials') return 'otp_invalid';
   if (code === 'session_not_found' || code === 'session_expired' || code === 'refresh_token_not_found') return 'not_authenticated';
   if (code === 'email_provider_disabled' || code === 'signup_disabled') return 'not_configured';
+  // Apple/Google not enabled in the Supabase dashboard, or this app's client id isn't allowed yet.
+  if (code === 'provider_disabled' || code === 'oauth_provider_not_supported' || code === 'bad_oauth_callback') return 'provider_unavailable';
+  if (code === 'flow_state_not_found' || code === 'flow_state_expired' || code === 'bad_code_verifier') return 'sign_in_cancelled';
+  if (code === 'validation_failed' || code === 'bad_jwt' || code === 'invalid_credentials') return 'otp_invalid';
   if (code === 'email_address_invalid') return 'invalid_payload';
   if (status === 403 || status === 401) return 'otp_invalid';
   return 'unknown';

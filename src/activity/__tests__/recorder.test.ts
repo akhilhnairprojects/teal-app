@@ -11,6 +11,8 @@ import type { RawFix } from '../types';
 jest.mock('@/backend/client', () => jest.requireActual('@/backend/testing/mockSupabase').mockClientModule());
 jest.mock('@/backend/auth', () => ({ getAuthState: () => ({ status: 'signedOut' }), subscribeAuth: () => () => {} }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn(), replace: jest.fn() } }));
+jest.mock('@/notifications', () => ({ haptic: jest.fn(), notifyLocal: jest.fn(async () => {}) }));
+jest.mock('@/voice/speak', () => ({ speakUpdate: jest.fn() }));
 jest.mock('expo-keep-awake', () => ({ activateKeepAwakeAsync: jest.fn(async () => {}), deactivateKeepAwake: jest.fn(async () => {}) }));
 
 const mockHub: { listener: ((f: RawFix) => void) | null; release: jest.Mock; error: string | null } = {
@@ -27,6 +29,7 @@ jest.mock('../locationHub', () => ({
   }),
 }));
 
+const notifications = jest.requireMock('@/notifications') as { notifyLocal: jest.Mock };
 const keepAwake = jest.requireMock('expo-keep-awake') as { activateKeepAwakeAsync: jest.Mock; deactivateKeepAwake: jest.Mock };
 
 const T0 = Date.UTC(2026, 9, 20, 13, 0, 0);
@@ -59,6 +62,7 @@ beforeEach(async () => {
   mockHub.error = null;
   mockHub.release.mockClear();
   keepAwake.activateKeepAwakeAsync.mockClear();
+  notifications.notifyLocal.mockClear();
   keepAwake.deactivateKeepAwake.mockClear();
   northM = 0;
   appStateHandler = null;
@@ -250,5 +254,31 @@ describe('recorder', () => {
       expect(done.metrics.efforts).toEqual([]);
       expect(done.previewPolyline.length).toBeGreaterThan(0);
     }
+  });
+
+  it('warns a runner who goes too fast, and keeps the run when they slow down', async () => {
+    await recorder.start({ kind: 'run' });
+    await feed(60, 3);
+    await feed(30, 9); // 9 m/s ≈ 20 mph; the 10 s smoothing delays the warning a few seconds
+    expect(last!.warnings).toContain('tooFast');
+    expect(notifications.notifyLocal).toHaveBeenCalledWith(expect.objectContaining({ title: 'Slow down to keep this run' }));
+    await feed(60, 3);
+    const done = await recorder.finish({ shareRoute: false });
+    expect('discarded' in done).toBe(false);
+    expect(await listLocalActivities()).toHaveLength(1);
+  });
+
+  it('deletes a run that stays too fast after the warning', async () => {
+    await recorder.start({ kind: 'run' });
+    await feed(60, 3);
+    await feed(80, 9);
+    expect(last!.phase).toBe('idle');
+    expect(last!.voided).toMatchObject({ kind: 'run' });
+    expect(notifications.notifyLocal).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Run deleted' }));
+    expect(mockHub.release).toHaveBeenCalled();
+    expect(await AsyncStorage.getItem(REC_HEADER_KEY)).toBeNull();
+    expect(await listLocalActivities()).toEqual([]);
+    recorder.dismissVoided();
+    expect(last!.voided).toBeNull();
   });
 });

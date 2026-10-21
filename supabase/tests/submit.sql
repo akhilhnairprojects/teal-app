@@ -158,5 +158,28 @@ begin
   assert (select public_path is null from public.activities where id = (s->>'id')::uuid), 'under 1 km: no public path';
 end $$;
 
+-- Speed guard (src/activity/speedGuard.ts): 20 s too fast warns, 45 s more deletes. A void run is rejected and
+-- nothing is stored; one that slowed down after the warning is kept. (The parity track's 60 s car stretch is
+-- 20 s of warning plus 40 s of grace, so it stays valid above.)
+do $$
+declare s jsonb;
+begin
+  set local role authenticated;
+  begin
+    perform public.submit_activity(public._test_payload('cc000000-0000-4000-8000-00000000000c', now() - interval '16 hours',
+                                                        public._test_line(42.36, 120, 9)));
+    assert false, 'too fast for 120 s should be rejected';
+  exception when sqlstate 'P0001' then assert sqlerrm = 'too_fast', sqlerrm;
+  end;
+  s := public.submit_activity(public._test_payload('cd000000-0000-4000-8000-00000000000d', now() - interval '18 hours',
+                                                   public._test_line(42.37, 50, 9)));
+  assert s->>'id' is not null, 'warned but slowed down: kept';
+  reset role;
+  assert not exists (select 1 from public.activities where client_id = 'cc000000-0000-4000-8000-00000000000c'), 'nothing stored';
+  assert not private.track_overspeed('run', array[0, 1000], array[42.3, 42.4], array[-71.1, -71.1]), 'one jump is not sustained';
+  assert not private.track_overspeed('bike', (select array_agg(k * 1000) from generate_series(0, 300) k),
+    (select array_agg(42.3 + k * 9 / 111195.0) from generate_series(0, 300) k), array_fill(-71.1::float8, array[301])), '9 m/s is fine on a bike';
+end $$;
+
 select 'submit.sql passed' as result;
 rollback;

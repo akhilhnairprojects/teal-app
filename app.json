@@ -8,7 +8,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anair.teal"
+      "bundleIdentifier": "com.anair.teal",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +33,15 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Teal uses your location to find the closest T stops and Bluebikes stations, and to record your runs and Bluebike rides while Teal is open."
+        }
+      ],
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Teal uses the microphone so you can say where you are riding to.",
+          "speechRecognitionPermission": "Teal turns your spoken destination into text to find a dock near it."
         }
       ]
     ],

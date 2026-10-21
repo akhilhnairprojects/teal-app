@@ -42,14 +42,21 @@ describe('recordModel', () => {
   it('turns recorder warnings into banners, permission first; foregroundOnly stays a chip', () => {
     const banners = recordBanners({
       phase: 'recording',
+      kind: 'run',
       backgroundGapMs: 120_000,
       warnings: ['foregroundOnly', 'vehicleSegment', 'backgroundGap', 'poorGps'],
     });
     expect(banners.map((b) => b.key)).toEqual(['backgroundGap', 'vehicleSegment']);
     expect(banners[0].text).toContain('Paused for 2 min');
-    const denied = recordBanners({ phase: 'idle', backgroundGapMs: 0, warnings: ['permissionDenied'] });
+    const denied = recordBanners({ phase: 'idle', kind: null, backgroundGapMs: 0, warnings: ['permissionDenied'] });
     expect(denied).toEqual([{ key: 'permissionDenied', text: RECORD_COPY.permissionDenied, settings: true }]);
-    expect(recordBanners({ phase: 'acquiring', backgroundGapMs: 0, warnings: ['poorGps'] })[0].key).toBe('poorGps');
+    expect(recordBanners({ phase: 'acquiring', kind: 'bike', backgroundGapMs: 0, warnings: ['poorGps'] })[0].key).toBe('poorGps');
+  });
+
+  it('puts the too-fast warning first', () => {
+    const b = recordBanners({ phase: 'recording', kind: 'run', backgroundGapMs: 0, warnings: ['vehicleSegment', 'tooFast'] });
+    expect(b.map((x) => x.key)).toEqual(['tooFast', 'vehicleSegment']);
+    expect(b[0].text).toContain('the run will be deleted');
   });
 
   it('knows which phases own the recorder', () => {
