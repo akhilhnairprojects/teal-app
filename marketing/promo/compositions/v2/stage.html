@@ -1,0 +1,47 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    #root { position: absolute; inset: 0; overflow: hidden; }
+    #st-ground { position: absolute; inset: 0; background: #CCF1EC; }
+    #st-phone { position: absolute; left: 588px; top: 140px; width: 412px; height: 800px;
+      border-radius: 60px; background: #0B1F1E; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22), inset 0 0 0 1.5px rgba(255, 255, 255, 0.14); }
+    #st-screen { position: absolute; left: 10px; top: 10px; width: 392px; height: 780px; border-radius: 50px; overflow: hidden; background: #EEF7F6; }
+  </style>
+  <div data-hf-id="hf-6c9w" id="root" data-composition-id="stage" data-width="1080" data-height="1080">
+    <div data-hf-id="hf-rhr4" id="st-ground"></div>
+    <div data-hf-id="hf-v4nb" id="st-phone">
+      <div data-hf-id="hf-dsp2" id="st-screen" data-layout-allow-overflow>
+          <img data-hf-id="hf-1vgw" id="st-scr-0" src="assets/v2/nearby-t-light.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;" />
+          <img data-hf-id="hf-jo8r" id="st-scr-1" src="assets/v2/nearby-bikes-light.png" alt="" style="position:absolute;left:0;top:0px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-yt5f" id="st-scr-2" src="assets/v2/plan-kendall-light.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-lufp" id="st-scr-3" src="assets/v2/park-choose-light.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-qgcu" id="st-scr-4" src="assets/v2/park-nav-light.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-qgrg" id="st-scr-5" src="assets/v2/record-dark.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-vii4" id="st-scr-6" src="assets/v2/territory-dark.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-4lkp" id="st-scr-7" src="assets/v2/leaderboards-dark.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+          <img data-hf-id="hf-iltv" id="st-scr-8" src="assets/v2/friends-dark.png" alt="" style="position:absolute;left:0;top:-69.822px;width:392px;height:849.832px;opacity:0;" />
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.to("#st-ground", { backgroundColor: "#EEF7F6", duration: 0.6, ease: "power2.inOut" }, 5.2);
+    tl.to("#st-ground", { backgroundColor: "#EEF7F6", duration: 0.6, ease: "power2.inOut" }, 9.9);
+    tl.to("#st-ground", { backgroundColor: "#FFFFFF", duration: 0.6, ease: "power2.inOut" }, 14.5);
+    tl.to("#st-ground", { backgroundColor: "#0B4F4A", duration: 0.6, ease: "power2.inOut" }, 20.5);
+    tl.to("#st-ground", { backgroundColor: "#061412", duration: 0.6, ease: "power2.inOut" }, 25.4);
+    tl.to("#st-ground", { backgroundColor: "#061412", duration: 0.6, ease: "power2.inOut" }, 30.5);
+    tl.to("#st-ground", { backgroundColor: "#0B4F4A", duration: 0.6, ease: "power2.inOut" }, 37.2);
+    tl.fromTo("#st-scr-1", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 5.5);
+    tl.fromTo("#st-scr-2", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 10.2);
+    tl.fromTo("#st-scr-3", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 14.8);
+    tl.fromTo("#st-scr-4", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 17.25);
+    tl.fromTo("#st-scr-5", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 20.8);
+    tl.fromTo("#st-scr-6", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 25.7);
+    tl.fromTo("#st-scr-7", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 30.8);
+    tl.fromTo("#st-scr-8", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 33.1);
+    tl.to("#st-phone", { x: 640, duration: 0.6, ease: "power3.in" }, 37.4);
+    tl.to({}, { duration: 42 }, 0);
+    window.__timelines["stage"] = tl;
+  </script>
+</template>

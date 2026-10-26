@@ -1,0 +1,29 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; src: url("assets/fonts/Manrope_400Regular.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Manrope", sans-serif; color: #E6F4F2; }
+    #end-lockup { position: absolute; left: 0; right: 0; top: 330px; text-align: center; }
+    #end-mark { display: inline-block; font-weight: 800; font-size: 190px; line-height: 1; letter-spacing: -0.06em; }
+    #end-dot { display: inline-block; color: #5EEAD4; }
+    #end-line { position: absolute; left: 0; right: 0; top: 590px; text-align: center; font-weight: 700; font-size: 46px; letter-spacing: -0.01em; }
+    #end-url { position: absolute; left: 0; right: 0; top: 680px; text-align: center; font-weight: 600; font-size: 32px; color: #5EEAD4; }
+  </style>
+  <div data-hf-id="hf-efsj" id="root" data-composition-id="end" data-width="1080" data-height="1080">
+    <div data-hf-id="hf-u2tv" id="end-lockup"><span data-hf-id="hf-rmov" id="end-mark">teal<span data-hf-id="hf-349f" id="end-dot">.</span></span></div>
+    <div data-hf-id="hf-u6zj" id="end-line">Run Boston, together</div>
+    <div data-hf-id="hf-htj1" id="end-url">teal-demo-three.vercel.app</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#end-mark", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.6, ease: "power3.out" }, 0.55);
+    tl.fromTo("#end-dot", { scale: 0, transformOrigin: "50% 80%" }, { scale: 1, duration: 0.45, ease: "back.out(2.2)" }, 1.05);
+    tl.fromTo("#end-line", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.5, ease: "power3.out" }, 1.45);
+    tl.fromTo("#end-url", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power2.out" }, 1.95);
+    tl.to({}, { duration: 4.6 }, 0);
+    window.__timelines["end"] = tl;
+  </script>
+</template>

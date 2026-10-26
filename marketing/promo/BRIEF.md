@@ -42,3 +42,41 @@ the feeling, with the live T arrivals and Bluebikes availability as the proof.
 - Real MBTA line colors (Red #DA291C, Orange #ED8B00, Green #00843D) appear in the
   app's line pills; keep them as-is.
 - Payment/unlocking happens in the Bluebikes app; don't imply Teal rents bikes.
+
+---
+
+## v2 — feature breakdown (2026-10-26)
+
+workflow: launch (hyperframes `references/types/launch.md`)
+flow: automation
+storyboard: yes
+message: "Teal runs your whole Boston day: the T, Bluebikes, finding a dock, and your runs, in one app"
+destination: social-feed (LinkedIn / X)
+aspect: 1080x1080
+length: 45s
+narration: yes (voiceover that covers both the day story and the feature breakdown)
+angle: hybrid of "feature rundown" and "a day with Teal" (the user asked for both)
+screens: Claude captures them (web screens from the running app; iPhone-only screens rendered
+  from the app's real components with sample data in a temporary capture route that is not shipped)
+
+### Features to cover (facts from the app code, 2026-10-26)
+
+1. Live T arrivals near you (Red, Orange, Green, Blue), per-car crowding on trips
+2. Nearby Bluebikes: classic, electric and open docks
+3. Trip planner: T, Bluebike, mixed or walk, with the weather
+4. Find a dock: say your destination; Teal picks a dock with room plus a backup, re-routes if it
+   fills, and reads updates aloud
+5. Record a run or a Bluebike ride, no account needed
+6. Too-fast check: a warning, then the run is deleted if it keeps going (fair leaderboards)
+7. Territory: finish a loop and claim the ~50 m squares inside it, no account needed
+8. Leaderboards and friends, with Sign in with Apple or Google
+
+v1 (the 30 s "Your Boston commute, in teal" promo above) stays in git history and in
+`public/teal-promo.mp4` until v2 replaces it.
+
+### Review changes (2026-10-26)
+
+The user cut feature 6 (too-fast check: "a negative/security measure as opposed to something that
+promotes running"), asked for real names off the leaderboard, and asked to focus on building a
+community of runners. Final: 7 features, the last one "Run with your crew", end line "Run Boston,
+together", 42 s. Voice: free on-device Kokoro (af_heart). Sign-in shot skipped.

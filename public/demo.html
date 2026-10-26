@@ -4,84 +4,135 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Teal — demo</title>
-    <meta name="description" content="Teal: live T arrivals, Bluebikes and a train-or-bike planner for Boston, in one glance." />
+    <meta name="description" content="Teal: live T arrivals, Bluebikes, a trip planner, voice dock-finding, run recording, territory and leaderboards for Boston, in one app." />
+    <meta property="og:title" content="Teal — your Boston day, in one app" />
+    <meta property="og:description" content="Live T, Bluebikes, trip planning, a voice-guided dock finder, run recording, territory and a running crew." />
+    <meta property="og:image" content="/teal-promo-poster.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
     <style>
-      :root { --bg: #061412; --border: #1c3a35; --text: #e6f4f2; --muted: #8fb3ad; --brand: #2dd4bf; }
+      :root { --bg: #061412; --surface: #0d211e; --border: #1c3a35; --text: #e6f4f2; --muted: #8fb3ad; --brand: #2dd4bf; --mint: #5eead4; }
       * { box-sizing: border-box; }
-      html, body { height: 100%; }
-      body {
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        background: radial-gradient(80% 60% at 75% 35%, #0f2e2a 0%, var(--bg) 65%) var(--bg);
-        color: var(--text);
-        font-family: Manrope, system-ui, -apple-system, "Segoe UI", sans-serif;
-      }
-      main {
-        flex: 1;
-        width: 100%;
-        max-width: 1080px;
-        margin: 0 auto;
-        padding: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 48px;
-      }
+      html { scroll-behavior: smooth; }
+      body { margin: 0; background: var(--bg); color: var(--text); font-family: Manrope, system-ui, -apple-system, "Segoe UI", sans-serif; }
+      a { color: inherit; }
+      .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+      /* Hero: the pitch beside the live web demo in a phone frame. */
+      .hero { min-height: 100vh; display: flex; align-items: center; justify-content: space-between; gap: 48px; padding-top: 24px; padding-bottom: 24px; }
       .wordmark { margin: 0; font-weight: 800; font-size: 72px; letter-spacing: -0.05em; color: #99f6e4; }
       .wordmark span { color: var(--brand); }
-      .pitch { margin: 8px 0 28px; font-size: 22px; font-weight: 600; line-height: 1.4; color: var(--muted); max-width: 440px; }
+      .pitch { margin: 8px 0 28px; font-size: 22px; font-weight: 600; line-height: 1.4; color: var(--muted); max-width: 460px; }
       .links { display: flex; flex-wrap: wrap; gap: 10px; }
-      .links a {
-        padding: 10px 18px;
-        border-radius: 999px;
-        border: 1.5px solid var(--border);
-        color: var(--text);
-        font-weight: 700;
-        font-size: 15px;
-        text-decoration: none;
-      }
+      .links a { padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--border); font-weight: 700; font-size: 15px; text-decoration: none; }
       .links a.primary { background: var(--brand); border-color: var(--brand); color: #04211e; }
-      .phone {
-        flex: none;
-        height: min(88vh, 760px);
-        aspect-ratio: 390 / 844;
-        padding: 11px;
-        border-radius: 52px;
-        background: #1b2a28;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 0 0 2px #2c4440;
-      }
+      .phone { flex: none; height: min(88vh, 760px); aspect-ratio: 390 / 844; padding: 11px; border-radius: 52px; background: #1b2a28; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 0 0 2px #2c4440; }
       .phone iframe { width: 100%; height: 100%; border: 0; border-radius: 42px; background: var(--bg); }
-      footer { padding: 0 24px 16px; text-align: center; color: var(--muted); font-size: 13px; }
+
+      /* Video */
+      .film { padding-top: 72px; padding-bottom: 24px; }
+      h2 { margin: 0 0 8px; font-size: 36px; font-weight: 800; letter-spacing: -0.03em; }
+      .lede { margin: 0 0 28px; color: var(--muted); font-size: 18px; line-height: 1.5; max-width: 640px; }
+      .film video { display: block; width: 100%; max-width: 640px; aspect-ratio: 1; border-radius: 24px; background: #000; border: 1px solid var(--border); }
+
+      /* Features: one row per feature, number, words and its real screen. */
+      .features { padding-top: 72px; padding-bottom: 72px; }
+      .feature { display: grid; grid-template-columns: 96px 1fr 220px; gap: 28px; align-items: center; padding: 28px 0; border-top: 1px solid var(--border); }
+      .num { font-size: 56px; font-weight: 800; letter-spacing: -0.04em; color: var(--mint); line-height: 1; }
+      .feature h3 { margin: 0 0 6px; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+      .feature p { margin: 0; color: var(--muted); font-size: 17px; line-height: 1.5; max-width: 520px; }
+      .tag { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--mint); }
+      .shot { width: 220px; aspect-ratio: 1179 / 2346; border-radius: 26px; overflow: hidden; border: 6px solid #1b2a28; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45); background: var(--surface); }
+      .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+      .note { margin: 24px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+
+      footer { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; line-height: 1.6; border-top: 1px solid var(--border); }
+      footer a { color: var(--mint); }
+
       @media (max-width: 820px) {
-        main { flex-direction: column; justify-content: center; text-align: center; }
+        .hero { flex-direction: column; justify-content: center; text-align: center; min-height: auto; padding-top: 72px; }
         .wordmark { font-size: 64px; }
         .pitch { margin: 8px auto 28px; }
         .phone { display: none; }
         .links { flex-direction: column; align-items: stretch; }
         .links a.primary { padding: 18px; font-size: 18px; }
-        .links a:not(.primary) { border: 0; padding: 8px; color: var(--muted); }
+        .feature { grid-template-columns: 1fr; gap: 14px; }
+        .num { font-size: 44px; }
+        .shot { width: min(260px, 70vw); }
+        h2 { font-size: 30px; }
       }
     </style>
   </head>
   <body>
     <main>
-      <section>
-        <p class="wordmark">teal<span>.</span></p>
-        <p class="pitch">Train or bike? Live T arrivals, Bluebikes and the faster way there, on one screen.</p>
-        <nav class="links">
-          <a class="primary" href="/?demo">Open Teal</a>
-          <a href="/">Use my location</a>
-          <a href="/teal-promo.mp4">Watch the 30-s video</a>
-        </nav>
+      <section class="wrap hero">
+        <div>
+          <p class="wordmark">teal<span>.</span></p>
+          <p class="pitch">Your whole Boston day in one app: the next T, the nearest Bluebike, a dock with room, and your runs with friends.</p>
+          <nav class="links">
+            <a class="primary" href="/?demo">Open Teal</a>
+            <a href="#film">Watch the video</a>
+            <a href="#features">What it does</a>
+          </nav>
+        </div>
+        <div class="phone" aria-label="Teal running live in an iPhone frame">
+          <iframe src="/?demo" title="Teal app, live demo" loading="lazy"></iframe>
+        </div>
       </section>
-      <div class="phone" aria-label="Teal running live in an iPhone frame">
-        <iframe src="/?demo" title="Teal app, live demo" loading="lazy"></iframe>
-      </div>
+
+      <section class="wrap film" id="film">
+        <h2>One day, seven taps</h2>
+        <p class="lede">From the 7:42 train to an evening loop on the Charles, in 42 seconds.</p>
+        <video src="/teal-promo.mp4" poster="/teal-promo-poster.jpg" controls playsinline preload="metadata"></video>
+      </section>
+
+      <section class="wrap features" id="features">
+        <h2>What Teal does</h2>
+        <p class="lede">Every screen below is the app itself.</p>
+
+        <article class="feature">
+          <div class="num">01</div>
+          <div><h3>Live T arrivals</h3><p>The next trains at every stop near you, counting down live, with crowding by car on each trip.</p><span class="tag">Web and iPhone</span></div>
+          <div class="shot"><img src="/screens/nearby-t-light.jpg" alt="Nearby: Red and Green Line arrivals at Park Street" loading="lazy" /></div>
+        </article>
+        <article class="feature">
+          <div class="num">02</div>
+          <div><h3>Bluebikes near you</h3><p>Classic bikes, e-bikes and open docks at the closest stations, before you walk over.</p><span class="tag">Web and iPhone</span></div>
+          <div class="shot"><img src="/screens/nearby-bikes-light.jpg" alt="Bluebikes stations near Park Street with bikes and open docks" loading="lazy" /></div>
+        </article>
+        <article class="feature">
+          <div class="num">03</div>
+          <div><h3>Plan any trip</h3><p>Train, bike, both or walking, fastest first, with the weather for the ride.</p><span class="tag">Web and iPhone</span></div>
+          <div class="shot"><img src="/screens/plan-kendall-light.jpg" alt="Trip plan from Park Street to Kendall/MIT with weather" loading="lazy" /></div>
+        </article>
+        <article class="feature">
+          <div class="num">04</div>
+          <div><h3>Find a dock, by voice</h3><p>Say where you’re riding. Teal picks a dock with room and a backup, re-checks every 45 seconds, re-routes if it fills, and reads updates aloud.</p><span class="tag">iPhone</span></div>
+          <div class="shot"><img src="/screens/park-nav-light.jpg" alt="Find a dock: head to Kendall T with a backup dock" loading="lazy" /></div>
+        </article>
+        <article class="feature">
+          <div class="num">05</div>
+          <div><h3>Record runs and rides</h3><p>Time, distance and pace for runs and Bluebike rides. No account needed.</p><span class="tag">iPhone</span></div>
+          <div class="shot"><img src="/screens/record-dark.jpg" alt="Recording a run: 23:09, 2.77 miles" loading="lazy" /></div>
+        </article>
+        <article class="feature">
+          <div class="num">06</div>
+          <div><h3>Claim your territory</h3><p>Finish a loop and the ~50 m squares inside it are yours for the month. Works without an account, right on your phone.</p><span class="tag">iPhone</span></div>
+          <div class="shot"><img src="/screens/territory-dark.jpg" alt="Territory: you hold 431 squares" loading="lazy" /></div>
+        </article>
+        <article class="feature">
+          <div class="num">07</div>
+          <div><h3>Run with your crew</h3><p>Weekly leaderboards, friends and their weekly miles. Sign in with Apple or Google to join in.</p><span class="tag">iPhone</span></div>
+          <div class="shot"><img src="/screens/friends-dark.jpg" alt="Friends: requests and this week’s running distance" loading="lazy" /></div>
+        </article>
+
+        <p class="note">The web demo shows live T, Bluebikes and the planner. The iPhone features run in Expo Go from the open-source project. Leaderboard names in the video and screenshots are sample data.</p>
+      </section>
     </main>
-    <footer>Teal is an independent project and is not affiliated with the MBTA or Bluebikes. Unlock and pay in the Bluebikes app.</footer>
+    <footer>
+      Teal is an independent project and is not affiliated with the MBTA or Bluebikes. Unlock and pay in the Bluebikes app.<br />
+      <a href="https://github.com/akhilhnairprojects/teal-app">Source on GitHub</a>
+    </footer>
   </body>
 </html>

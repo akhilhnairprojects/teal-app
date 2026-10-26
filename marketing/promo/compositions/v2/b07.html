@@ -1,0 +1,62 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; src: url("assets/fonts/Manrope_400Regular.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Manrope", sans-serif; color: #E6F4F2; }
+    #b07-chip { position: absolute; left: 96px; top: 96px; height: 40px; overflow: hidden; display: flex; align-items: center; gap: 12px; }
+    #b07-dot { width: 14px; height: 14px; border-radius: 7px; background: #5EEAD4; }
+    #b07-time { display: block; font-weight: 700; font-size: 30px; letter-spacing: 0.06em; text-transform: uppercase; color: #E6F4F2; }
+    #b07-counter { position: absolute; left: 88px; top: 140px; height: 210px; overflow: hidden; display: flex; align-items: baseline; }
+    #b07-num { display: block; font-weight: 800; font-size: 200px; line-height: 210px; letter-spacing: -0.04em; color: #5EEAD4; }
+    #b07-of { font-weight: 800; font-size: 64px; letter-spacing: -0.02em; color: #E6F4F2; opacity: 0.4; margin-left: 10px; }
+    #b07-title { position: absolute; left: 96px; top: 370px; font-weight: 700; font-size: 60px; line-height: 72px; letter-spacing: -0.02em; }
+    #b07-title div { white-space: nowrap; }
+    .card { position: absolute; overflow: hidden; border-radius: 22px; opacity: 0; transform-origin: 0 0; }
+  </style>
+  <div data-hf-id="hf-yjdp" id="root" data-composition-id="b07" data-width="1080" data-height="1080">
+    <div data-hf-id="hf-x3c9" id="b07-chip"><div data-hf-id="hf-235g" id="b07-dot"></div><span data-hf-id="hf-sh6q" id="b07-time">7:10 PM</span></div>
+    <div data-hf-id="hf-iwx9" id="b07-counter"><span data-hf-id="hf-n859" id="b07-num">07</span><span data-hf-id="hf-0r09" id="b07-of">/07</span></div>
+    <div data-hf-id="hf-1yvj" id="b07-title"><div data-hf-id="hf-r6mx" id="b07-t1">Run with</div><div data-hf-id="hf-53er" id="b07-t2">your crew</div></div>
+    
+    <div data-hf-id="hf-daij" id="b07-card0" class="card" style="left:614.957px;top:397.369px;width:358.087px;height:241.384px;">
+      <img data-hf-id="hf-7q2n" src="assets/v2/leaderboards-dark.png" alt="" style="position:absolute;left:-16.957px;top:-317.191px;width:392px;height:849.832px;" />
+    </div>
+    <div data-hf-id="hf-7mhg" id="b07-card1" class="card" style="left:614.957px;top:584.891px;width:358.087px;height:79.796px;">
+      <img data-hf-id="hf-az97" src="assets/v2/friends-dark.png" alt="" style="position:absolute;left:-16.957px;top:-504.712px;width:392px;height:849.832px;" />
+    </div>
+    <div data-hf-id="hf-vxw4" id="b07-card2" class="card" style="left:614.957px;top:718.55px;width:358.087px;height:159.593px;">
+      <img data-hf-id="hf-qaxb" src="assets/v2/friends-dark.png" alt="" style="position:absolute;left:-16.957px;top:-638.372px;width:392px;height:849.832px;" />
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#b07-num", { yPercent: 100 }, { yPercent: 0, duration: 0.35, ease: "power3.out" }, 0.05);
+    tl.fromTo("#b07-time", { yPercent: 100 }, { yPercent: 0, duration: 0.35, ease: "power3.out" }, 0.05);
+    tl.fromTo("#b07-t1", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out" }, 0.35);
+    tl.fromTo("#b07-t2", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out" }, 0.5);
+    tl.set("#b07-card0", { opacity: 1 }, 0.6);
+    tl.to("#b07-card0", { y: 162.631, scale: 1.243, boxShadow: "0 18px 40px rgba(0,0,0,0.28)", duration: 0.38, ease: "power3.out" }, 0.6);
+    tl.to("#b07-card0", { x: -518.957, duration: 0.55, ease: "power2.inOut" }, 0.6);
+    tl.to("#b07-card0", { x: 0, y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.4, ease: "power2.inOut" }, 2);
+    tl.set("#b07-card0", { opacity: 0 }, 2.4);
+    tl.set("#b07-card1", { opacity: 1 }, 2.7);
+    tl.to("#b07-card1", { y: -24.891, scale: 1.6, boxShadow: "0 18px 40px rgba(0,0,0,0.28)", duration: 0.38, ease: "power3.out" }, 2.7);
+    tl.to("#b07-card1", { x: -518.957, duration: 0.55, ease: "power2.inOut" }, 2.7);
+    tl.to("#b07-card1", { x: 0, y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.4, ease: "power2.inOut" }, 4.3);
+    tl.set("#b07-card1", { opacity: 0 }, 4.7);
+    tl.set("#b07-card2", { opacity: 1 }, 4.55);
+    tl.to("#b07-card2", { y: -158.55, scale: 1.6, boxShadow: "0 18px 40px rgba(0,0,0,0.28)", duration: 0.38, ease: "power3.out" }, 4.55);
+    tl.to("#b07-card2", { x: -518.957, duration: 0.55, ease: "power2.inOut" }, 4.55);
+    tl.to("#b07-card2", { x: 0, y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.4, ease: "power2.inOut" }, 6.1);
+    tl.set("#b07-card2", { opacity: 0 }, 6.5);
+    
+    tl.to("#b07-num", { yPercent: -100, duration: 0.3, ease: "power2.in" }, 6.28);
+    tl.to("#b07-time", { yPercent: -100, duration: 0.3, ease: "power2.in" }, 6.28);
+    tl.to("#b07-title", { opacity: 0, duration: 0.25, ease: "power2.in" }, 6.3);
+    tl.to({}, { duration: 6.6 }, 0);
+    window.__timelines["b07"] = tl;
+  </script>
+</template>

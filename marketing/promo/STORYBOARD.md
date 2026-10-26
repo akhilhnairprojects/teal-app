@@ -176,3 +176,61 @@ Scene 1 (0.0–1.0s): deep-teal field; on "Teal.", the wordmark scales up softly
 Scene 2 (1.0–2.8s): as the VO says "Your Boston commute — in teal", the tagline sits dim beneath the anchor and its words step bright one by one in time with the VO, the last word "teal" landing in mint and bold.
 Scene 3 (2.8–3.4s): the "FOR IPHONE" outline chip fades up beneath.
 Scene 4 (3.4–4.0s): final hold, then the whole lockup fades to the deep-teal field (the film's only exit).
+
+---
+
+# v2 — One day, seven taps (2026-10-26)
+
+Plan and numbers: `SPEC.md`; storylines: `STORYLINES.md`; review: `REVIEW.md`. The compositions
+are generated from `scripts/v2-data.mjs` by `node scripts/build-v2.mjs` into `compositions/v2/` and
+`index.html`. `boards/storyboard.html` is the board as first reviewed (8 beats); after the review the
+too-fast beat was cut, the leaderboard names changed, and the last beat became the running-crew beat.
+Final length 42 s. Status: animated and rendered (`renders/teal-v2-final.mp4`).
+
+## Frame 1 — Live T arrivals (0-5.5s)
+- act: morning
+- status: animated
+- src: compositions/v2/b01.html
+- voiceover: "7:42 at Park Street. Teal already knows when your train is coming."
+
+## Frame 2 — Bluebikes near you (5.5-10.2s)
+- act: morning
+- status: animated
+- src: compositions/v2/b02.html
+- voiceover: "Rather ride? The Bluebikes nearest you, and every open dock."
+
+## Frame 3 — Plan any trip (10.2-14.8s)
+- act: morning
+- status: animated
+- src: compositions/v2/b03.html
+- voiceover: "Or let Teal plan it: train, bike or both, with the weather."
+
+## Frame 4 — Find a dock, by voice (14.8-20.8s)
+- act: morning
+- status: animated
+- src: compositions/v2/b04.html
+- voiceover: "Riding to Kendall? Just say it. Teal finds a dock with room, and a backup."
+
+## Frame 5 — Record runs and rides (20.8-25.7s)
+- act: evening
+- status: animated
+- src: compositions/v2/b05.html
+- voiceover: "After work, hit record. Runs and rides, no account needed."
+
+## Frame 6 — Claim your territory (25.7-30.8s)
+- act: evening
+- status: animated
+- src: compositions/v2/b06.html
+- voiceover: "Close a loop, and the squares inside it are yours for the month."
+
+## Frame 7 — Run with your crew (30.8-37.4s)
+- act: evening
+- status: animated
+- src: compositions/v2/b07.html
+- voiceover: "Then see how you stack up this week, and add friends to run with."
+
+## Frame 8 — End card (37.4-42s)
+- act: end
+- status: animated
+- src: compositions/v2/end.html
+- voiceover: "Teal. Run Boston, together."

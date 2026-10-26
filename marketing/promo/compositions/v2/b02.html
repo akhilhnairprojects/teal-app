@@ -1,0 +1,46 @@
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face { font-family: "Manrope"; font-weight: 400; src: url("assets/fonts/Manrope_400Regular.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 600; src: url("assets/fonts/Manrope_600SemiBold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 700; src: url("assets/fonts/Manrope_700Bold.ttf") format("truetype"); }
+    @font-face { font-family: "Manrope"; font-weight: 800; src: url("assets/fonts/Manrope_800ExtraBold.ttf") format("truetype"); }
+    #root { position: absolute; inset: 0; overflow: hidden; font-family: "Manrope", sans-serif; color: #0B1F1E; }
+    #b02-chip { position: absolute; left: 96px; top: 96px; height: 40px; overflow: hidden; display: flex; align-items: center; gap: 12px; }
+    #b02-dot { width: 14px; height: 14px; border-radius: 7px; background: #0D9488; }
+    #b02-time { display: block; font-weight: 700; font-size: 30px; letter-spacing: 0.06em; text-transform: uppercase; color: #0B1F1E; }
+    #b02-counter { position: absolute; left: 88px; top: 140px; height: 210px; overflow: hidden; display: flex; align-items: baseline; }
+    #b02-num { display: block; font-weight: 800; font-size: 200px; line-height: 210px; letter-spacing: -0.04em; color: #0D9488; }
+    #b02-of { font-weight: 800; font-size: 64px; letter-spacing: -0.02em; color: #0B1F1E; opacity: 0.4; margin-left: 10px; }
+    #b02-title { position: absolute; left: 96px; top: 370px; font-weight: 700; font-size: 60px; line-height: 72px; letter-spacing: -0.02em; }
+    #b02-title div { white-space: nowrap; }
+    .card { position: absolute; overflow: hidden; border-radius: 22px; opacity: 0; transform-origin: 0 0; }
+  </style>
+  <div data-hf-id="hf-hmsa" id="root" data-composition-id="b02" data-width="1080" data-height="1080">
+    <div data-hf-id="hf-mxiu" id="b02-chip"><div data-hf-id="hf-oh1h" id="b02-dot"></div><span data-hf-id="hf-fnzh" id="b02-time">8:05 AM</span></div>
+    <div data-hf-id="hf-7r0c" id="b02-counter"><span data-hf-id="hf-f2lr" id="b02-num">02</span><span data-hf-id="hf-z28k" id="b02-of">/07</span></div>
+    <div data-hf-id="hf-28t6" id="b02-title"><div data-hf-id="hf-7fr5" id="b02-t1">Bluebikes</div><div data-hf-id="hf-xfmb" id="b02-t2">near you</div></div>
+    
+    <div data-hf-id="hf-ov79" id="b02-card0" class="card" style="left:614.957px;top:301.613px;width:358.087px;height:165.578px;">
+      <img data-hf-id="hf-mja2" src="assets/v2/nearby-bikes-light.png" alt="" style="position:absolute;left:-16.957px;top:-151.613px;width:392px;height:849.832px;" />
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#b02-num", { yPercent: 100 }, { yPercent: 0, duration: 0.35, ease: "power3.out" }, 0.05);
+    tl.fromTo("#b02-time", { yPercent: 100 }, { yPercent: 0, duration: 0.35, ease: "power3.out" }, 0.05);
+    tl.fromTo("#b02-t1", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out" }, 0.35);
+    tl.fromTo("#b02-t2", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "power3.out" }, 0.5);
+    tl.set("#b02-card0", { opacity: 1 }, 1.35);
+    tl.to("#b02-card0", { y: 258.387, scale: 1.6, boxShadow: "0 18px 40px rgba(0,0,0,0.28)", duration: 0.38, ease: "power3.out" }, 1.35);
+    tl.to("#b02-card0", { x: -518.957, duration: 0.55, ease: "power2.inOut" }, 1.35);
+    tl.to("#b02-card0", { x: 0, y: 0, scale: 1, boxShadow: "0 0 0 rgba(0,0,0,0)", duration: 0.4, ease: "power2.inOut" }, 4.2);
+    tl.set("#b02-card0", { opacity: 0 }, 4.6);
+    
+    tl.to("#b02-num", { yPercent: -100, duration: 0.3, ease: "power2.in" }, 4.38);
+    tl.to("#b02-time", { yPercent: -100, duration: 0.3, ease: "power2.in" }, 4.38);
+    tl.to("#b02-title", { opacity: 0, duration: 0.25, ease: "power2.in" }, 4.4);
+    tl.to({}, { duration: 4.7 }, 0);
+    window.__timelines["b02"] = tl;
+  </script>
+</template>
